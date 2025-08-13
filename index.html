@@ -330,7 +330,7 @@
 <div id="modal-container"></div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+window.onload = () => {
     // --- DOM要素 ---
     const getEl = (id) => document.getElementById(id);
     const canvas = getEl('radarCanvas');
@@ -703,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.chartData.values.splice(newSides);
         }
     }
-
+    
     function drawOnContext(targetCtx, width, height, geometry) {
         targetCtx.clearRect(0, 0, width, height);
 
@@ -731,24 +731,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateGeometry(width, height) {
+        const cx = width / 2;
+        const cy = height / 2;
+        let r = Math.min(width, height) / 2 * 0.75;
+
         if (state.settings.aspectRatio === 'landscape' && width / height > 1.1) {
             const chartAreaSize = height;
-            return {
-                cx: chartAreaSize / 2,
-                cy: height / 2,
+             return {
+                cx: cx,
+                cy: cy,
                 r: (chartAreaSize / 2) * 0.75,
-                textCenterX: chartAreaSize + (width - chartAreaSize) / 2,
-                textCenterY: height / 2,
-                maxTextWidth: (width - chartAreaSize) * 0.9,
+                textCenterX: cx,
+                textCenterY: cy,
+                maxTextWidth: r * 1.8,
             };
         } else {
             return {
-                cx: width / 2,
-                cy: height / 2,
-                r: Math.min(width, height) / 2 * 0.75,
-                textCenterX: width / 2,
-                textCenterY: height / 2,
-                maxTextWidth: (Math.min(width, height) / 2 * 0.75) * 1.8,
+                cx: cx,
+                cy: cy,
+                r: r,
+                textCenterX: cx,
+                textCenterY: cy,
+                maxTextWidth: r * 1.8,
             };
         }
     }
@@ -1329,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     init();
-});
+};
 </script>
 
 </body>
