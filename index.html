@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像放り込みレーダーチャートメーカー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        /* カスタムスタイル */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            overscroll-behavior: none;
+            background-color: #f0f2f5;
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .left-panel {
+            width: 350px;
+            flex-shrink: 0;
+            background-color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e2e8f0;
+        }
+        .panel-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .panel-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+        canvas {
+            cursor: crosshair;
+        }
+        .label-input {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 左側設定パネル -->
+    <aside class="left-panel">
+        <div class="panel-header flex justify-between items-center">
+            <h2 id="panel-title" class="text-xl font-bold"></h2>
+            <button id="back-to-settings-btn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-arrow-left mr-2"></i><span data-lang-key="back_to_settings">戻る</span></button>
+        </div>
+        <div id="panel-content" class="panel-content">
+            <!-- 設定パネル -->
+            <div id="panel-settings">
+                <div class="space-y-4">
+                    <div>
+                        <label for="language" class="block text-sm font-medium text-gray-700" data-lang-key="labelLanguage">言語</label>
+                        <select id="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="ja">日本語</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="labelFontSize" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelLabelFontSize">項目文字サイズ</span>: <span id="labelFontSize-value">14</span>px</label>
+                        <input type="range" id="labelFontSize" min="1" max="60" value="14" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelSides">角の数</span>: <span id="sides-value">5</span><span data-lang-key="sidesUnit">角形</span></label>
+                        <input type="range" id="sides" min="4" max="7" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelMaxValue">最大値</span>: <span id="maxValue-value">5</span></label>
+                        <input type="range" id="maxValue" min="4" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="chartLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelChartLineWidth">チャート線の太さ</span>: <span id="chartLineWidth-value">2</span>px</label>
+                        <input type="range" id="chartLineWidth" min="1" max="10" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="chartLineColor" class="block text-sm font-medium text-gray-700" data-lang-key="labelChartLineColor">チャート線の色</label>
+                        <input type="color" id="chartLineColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="fillColor" class="block text-sm font-medium text-gray-700" data-lang-key="labelFillColor">塗りつぶしの色</label>
+                        <input type="color" id="fillColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="fillOpacity" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelFillOpacity">塗りつぶしの透過度</span>: <span id="fillOpacity-value">30</span>%</label>
+                        <input type="range" id="fillOpacity" min="0" max="100" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="gridLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelGridLineWidth">枠線の太さ</span>: <span id="gridLineWidth-value">1</span>px</label>
+                        <input type="range" id="gridLineWidth" min="0" max="5" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="gridLineColor" class="block text-sm font-medium text-gray-700" data-lang-key="labelGridLineColor">枠線の色</label>
+                        <input type="color" id="gridLineColor" value="#CCCCCC" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+                <div class="mt-6 pt-4 border-t">
+                    <button id="resetSettingsButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-lang-key="btnResetSettings">
+                        設定をデフォルトに戻す
+                    </button>
+                </div>
+            </div>
+             <!-- 画像/テキスト編集パネル -->
+            <div id="panel-edit" class="hidden">
+                 <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" data-lang-key="labelEditMode">編集モード</label>
+                        <select id="editMode" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="image" data-lang-key="optionImage">画像</option>
+                            <option value="text" data-lang-key="optionText">テキスト</option>
+                        </select>
+                    </div>
+                    <!-- 画像編集用 -->
+                    <div id="image-controls" class="space-y-4">
+                         <div>
+                            <label for="imageClip" class="block text-sm font-medium text-gray-700" data-lang-key="labelImageClip">画像表示方法</label>
+                            <select id="imageClip" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="data" data-lang-key="clipData">チャート形状にクリップ</option>
+                                <option value="frame" data-lang-key="clipFrame">グラフの枠にクリップ</option>
+                                <option value="full" data-lang-key="clipFull">全体表示</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label for="imageScale" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelScale">拡大縮小</span>: <span id="imageScale-value">100</span>%</label>
+                            <input type="range" id="imageScale" min="20" max="300" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                         <div>
+                            <label for="imageOpacity" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelOpacity">透過度</span>: <span id="imageOpacity-value">100</span>%</label>
+                            <input type="range" id="imageOpacity" min="0" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="imageOffsetX" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelOffsetX">横位置</span>: <span id="imageOffsetX-value">0</span>px</label>
+                            <input type="range" id="imageOffsetX" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="imageOffsetY" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelOffsetY">縦位置</span>: <span id="imageOffsetY-value">0</span>px</label>
+                            <input type="range" id="imageOffsetY" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                    <!-- テキスト編集用 -->
+                    <div id="text-controls" class="hidden">
+                        <textarea id="chartText" class="w-full h-24 border border-gray-300 rounded-md p-2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <!-- 保存パネル -->
+            <div id="panel-save" class="hidden">
+                 <h2 class="text-xl font-bold mb-4" data-lang-key="saveTitle">チャートを保存</h2>
+                 <div class="space-y-4">
+                    <div>
+                        <label for="saveFileName" class="block text-sm font-medium text-gray-700" data-lang-key="labelFileName">ファイル名</label>
+                        <input type="text" id="saveFileName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <button id="saveButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-lang-key="btnSave">
+                        保存
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2" data-lang-key="saveDesc">現在のチャート設定とデータをJSONファイルとして保存します。</p>
+                 </div>
+            </div>
+            <!-- 呼び出しパネル -->
+            <div id="panel-load" class="hidden">
+                <h2 class="text-xl font-bold mb-4" data-lang-key="loadTitle">チャートを呼び出し</h2>
+                <div class="space-y-4">
+                    <button id="loadButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-lang-key="btnLoad">
+                        ファイルを選択
+                    </button>
+                    <input type="file" id="fileInput" class="hidden" accept=".json">
+                    <p class="text-xs text-gray-500 mt-2" data-lang-key="loadDesc">保存したJSONファイルを読み込んでチャートを復元します。</p>
+                </div>
+            </div>
+            <!-- 画像出力パネル -->
+            <div id="panel-export" class="hidden">
+                <h2 class="text-xl font-bold mb-4" data-lang-key="exportTitle">画像として出力</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="exportFileName" class="block text-sm font-medium text-gray-700" data-lang-key="labelFileName">ファイル名</label>
+                        <input type="text" id="exportFileName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="exportFormat" class="block text-sm font-medium text-gray-700" data-lang-key="labelExportFormat">拡張子</label>
+                        <select id="exportFormat" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="png">PNG</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="webp">WebP</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label for="exportSize" class="block text-sm font-medium text-gray-700"><span data-lang-key="labelExportSize">画像サイズ</span>: <span id="exportSize-value">800</span>px</label>
+                        <input type="range" id="exportSize" min="400" max="2000" step="100" value="800" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <button id="exportButton" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-lang-key="btnExport">
+                        出力
+                    </button>
+                </div>
+            </div>
+            <!-- 操作方法パネル -->
+            <div id="panel-help" class="hidden text-sm text-gray-700 space-y-4"></div>
+        </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content p-4 md:p-8">
+        <header class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-wrap items-center justify-between gap-2">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800" data-lang-key="appTitle">画像放り込みレーダーチャートメーカー</h1>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button id="settings-btn" class="menu-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-cog mr-2"></i><span data-lang-key="tabSettings">設定</span></button>
+                <button id="save-btn" class="menu-btn bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-save mr-2"></i><span data-lang-key="tabSave">保存</span></button>
+                <button id="load-btn" class="menu-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-folder-open mr-2"></i><span data-lang-key="tabLoad">呼び出し</span></button>
+                <button id="export-btn" class="menu-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-image mr-2"></i><span data-lang-key="tabExport">画像出力</span></button>
+                <button id="help-btn" class="menu-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-question-circle mr-2"></i><span data-lang-key="tabHelp">操作方法</span></button>
+            </div>
+        </header>
+        <div class="flex-grow bg-white p-4 md:p-6 rounded-lg shadow-sm flex justify-center items-center">
+             <div id="canvas-container" class="w-full h-full flex justify-center items-center relative">
+                <canvas id="radarCanvas"></canvas>
+            </div>
+        </div>
+    </main>
+</div>
+    
+    <!-- 確認ダイアログ -->
+    <div id="confirmDialog" class="modal-backdrop hidden">
+        <div class="modal-content w-full max-w-sm">
+            <h3 id="confirmTitle" class="text-lg font-medium" data-lang-key="confirmTitle">確認</h3>
+            <p id="confirmMessage" class="mt-2 text-sm text-gray-600"></p>
+            <div class="mt-4 flex justify-end space-x-2">
+                <button id="confirmNo" class="px-4 py-2 bg-gray-200 rounded-md" data-lang-key="btnNo">いいえ</button>
+                <button id="confirmYes" class="px-4 py-2 bg-red-600 text-white rounded-md" data-lang-key="btnYes">はい</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM要素の取得
+    const canvas = document.getElementById('radarCanvas');
+    const ctx = canvas.getContext('2d');
+    const canvasContainer = document.getElementById('canvas-container');
+
+    // 翻訳テキスト
+    const translations = {
+        ja: {
+            appTitle: "画像放り込みレーダーチャートメーカー",
+            tabSettings: "設定", tabSave: "保存", tabLoad: "呼び出し", tabExport: "画像出力", tabHelp: "操作方法",
+            settingsTitle: "チャート設定",
+            labelLanguage: "言語",
+            labelLabelFontSize: "項目文字サイズ",
+            labelSides: "角の数", sidesUnit: "角形",
+            labelMaxValue: "最大値",
+            labelChartLineWidth: "チャート線の太さ",
+            labelChartLineColor: "チャート線の色",
+            labelFillColor: "塗りつぶしの色",
+            labelFillOpacity: "塗りつぶしの透過度",
+            labelGridLineWidth: "枠線の太さ",
+            labelGridLineColor: "枠線の色",
+            btnResetSettings: "設定をデフォルトに戻す",
+            saveTitle: "チャートを保存",
+            labelFileName: "ファイル名",
+            btnSave: "保存",
+            saveDesc: "現在のチャート設定とデータをJSONファイルとして保存します。",
+            loadTitle: "チャートを呼び出し",
+            btnLoad: "ファイルを選択",
+            loadDesc: "保存したJSONファイルを読み込んでチャートを復元します。",
+            exportTitle: "画像として出力",
+            labelExportFormat: "拡張子",
+            labelExportSize: "画像サイズ",
+            btnExport: "出力",
+            helpTitle: "操作方法",
+            helpImageTitle: "画像の設定",
+            helpImage1: "<strong>画像の読込:</strong> PCから右側のチャートエリアに画像をドラッグ＆ドロップします。",
+            helpImage2: "<strong>画像の変更:</strong> 新しい画像をドラッグ＆ドロップすると変更できます。",
+            helpChartTitle: "チャートの編集",
+            helpChart1: "<strong>数値の変更:</strong> チャート上の黒い点をドラッグします。",
+            helpChart2: "<strong>項目名の変更:</strong> \"A\", \"B\"などの項目名をダブルクリックします。",
+            helpChart3: "<strong>画像/テキストの調整:</strong> チャートエリア内をダブルクリックすると編集ウィンドウが開きます。",
+            helpSettingsTitle: "設定のカスタマイズ",
+            helpSettings1: "<strong>各種設定:</strong> 左側の「設定」タブで、チャートの形、色、線の太さなどを変更できます。設定は自動で保存されます。",
+            helpDataTitle: "データの保存と出力",
+            helpData1: "<strong>作業データの保存:</strong> 「保存」タブで、現在のチャートの状態をファイルに保存できます。",
+            helpData2: "<strong>作業データの読込:</strong> 「呼び出し」タブで、保存したファイルを読み込んで作業を再開できます。",
+            helpData3: "<strong>画像として出力:</strong> 「画像出力」タブで、完成したチャートを画像ファイルとしてダウンロードできます。",
+            modalTitle: "画像/テキスト編集",
+            labelEditMode: "編集モード",
+            optionImage: "画像", optionText: "テキスト",
+            labelImageClip: "画像表示方法",
+            clipData: "チャート形状にクリップ", clipFrame: "グラフの枠にクリップ", clipFull: "全体表示",
+            labelScale: "拡大縮小",
+            labelOpacity: "透過度", labelOffsetX: "横位置", labelOffsetY: "縦位置",
+            textPlaceholder: "チャートに表示するテキストを入力",
+            btnClose: "閉じる",
+            confirmTitle: "確認",
+            btnNo: "いいえ", btnYes: "はい",
+            confirmMessage: "画像を置き換えますか？",
+            confirmReset: "すべての設定を初期値に戻します。よろしいですか？",
+            invalidFile: "無効なファイル形式です。",
+            savePlaceholder: "チャートデータ.json",
+            exportPlaceholder: "レーダーチャート",
+            back_to_settings: "戻る",
+        },
+        en: {
+            appTitle: "Image Drop Radar Chart Maker",
+            tabSettings: "Settings", tabSave: "Save", tabLoad: "Load", tabExport: "Export", tabHelp: "Help",
+            settingsTitle: "Chart Settings",
+            labelLanguage: "Language",
+            labelLabelFontSize: "Label Font Size",
+            labelSides: "Sides", sidesUnit: "",
+            labelMaxValue: "Max Value",
+            labelChartLineWidth: "Chart Line Width",
+            labelChartLineColor: "Chart Line Color",
+            labelFillColor: "Fill Color",
+            labelFillOpacity: "Fill Opacity",
+            labelGridLineWidth: "Grid Line Width",
+            labelGridLineColor: "Grid Line Color",
+            btnResetSettings: "Reset to Default",
+            saveTitle: "Save Chart",
+            labelFileName: "File Name",
+            btnSave: "Save",
+            saveDesc: "Save the current chart settings and data as a JSON file.",
+            loadTitle: "Load Chart",
+            btnLoad: "Select File",
+            loadDesc: "Load a saved JSON file to restore the chart.",
+            exportTitle: "Export as Image",
+            labelExportFormat: "Format",
+            labelExportSize: "Image Size",
+            btnExport: "Export",
+            helpTitle: "How to Use",
+            helpImageTitle: "Image Settings",
+            helpImage1: "<strong>Load Image:</strong> Drag & drop an image from your PC to the chart area on the right.",
+            helpImage2: "<strong>Change Image:</strong> You can change the image by dragging & dropping a new one.",
+            helpChartTitle: "Chart Editing",
+            helpChart1: "<strong>Change Values:</strong> Drag the black dots on the chart.",
+            helpChart2: "<strong>Change Labels:</strong> Double-click on labels like \"A\", \"B\".",
+            helpChart3: "<strong>Adjust Image/Text:</strong> Double-click inside the chart area to open the edit window.",
+            helpSettingsTitle: "Customization",
+            helpSettings1: "<strong>Various Settings:</strong> Change the chart's shape, colors, line widths, etc., in the 'Settings' tab. Settings are saved automatically.",
+            helpDataTitle: "Data Save/Export",
+            helpData1: "<strong>Save Data:</strong> Save the current chart state to a file from the 'Save' tab.",
+            helpData2: "<strong>Load Data:</strong> Load a saved file to resume your work from the 'Load' tab.",
+            helpData3: "<strong>Export Image:</strong> Download the finished chart as an image file from the 'Export' tab.",
+            modalTitle: "Edit Image/Text",
+            labelEditMode: "Edit Mode",
+            optionImage: "Image", optionText: "Text",
+            labelImageClip: "Image Display Method",
+            clipData: "Clip to data shape", clipFrame: "Clip to chart frame", clipFull: "Show full image",
+            labelScale: "Scale",
+            labelOpacity: "Opacity", labelOffsetX: "Offset X", labelOffsetY: "Offset Y",
+            textPlaceholder: "Enter text to display on the chart",
+            btnClose: "Close",
+            confirmTitle: "Confirm",
+            btnNo: "No", btnYes: "Yes",
+            confirmMessage: "Do you want to replace the image?",
+            confirmReset: "Reset all settings to their default values. Are you sure?",
+            invalidFile: "Invalid file format.",
+            savePlaceholder: "ChartData.json",
+            exportPlaceholder: "RadarChart",
+            back_to_settings: "Back",
+        }
+    };
+
+    // 状態管理オブジェクト
+    let state = {
+        settings: {
+            language: 'ja',
+            sides: 5,
+            maxValue: 5,
+            chartLineWidth: 2,
+            chartLineColor: '#000000',
+            gridLineWidth: 1,
+            gridLineColor: '#cccccc',
+            imageClip: 'data',
+            fillColor: '#000000',
+            fillOpacity: 0.3,
+            labelFontSize: 14,
+        },
+        chartData: {
+            labels: ['A', 'B', 'C', 'D', 'E'],
+            values: [1, 1, 1, 1, 1],
+        },
+        image: {
+            element: null,
+            name: '',
+            opacity: 1.0,
+            offsetX: 0,
+            offsetY: 0,
+            scale: 1.0,
+        },
+        text: {
+            content: '',
+        },
+        editMode: 'image', // 'image' or 'text'
+        draggingPoint: -1,
+        editingLabel: -1,
+    };
+
+    let confirmAction = null;
+    let activePanelView = 'settings';
+
+    // --- 言語設定 ---
+    function setLanguage(lang) {
+        state.settings.language = lang;
+        document.documentElement.lang = lang;
+        document.querySelectorAll('[data-lang-key]').forEach(el => {
+            const key = el.dataset.langKey;
+            const translation = translations[lang][key];
+            if (translation) {
+                if (el.children.length > 0 && el.dataset.langKey.startsWith('label')) {
+                    const mainTextNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                    if(mainTextNode) mainTextNode.textContent = translation;
+                    else {
+                        const span = el.querySelector('span[data-lang-key]');
+                        if(span) span.innerHTML = translation;
+                    }
+                } else {
+                     el.innerHTML = translation;
+                }
+            }
+        });
+        document.getElementById('chartText').placeholder = translations[lang].textPlaceholder;
+        document.getElementById('saveFileName').placeholder = translations[lang].savePlaceholder;
+        document.getElementById('exportFileName').placeholder = translations[lang].exportPlaceholder;
+
+        const sidesUnitEl = document.querySelector('span[data-lang-key="sidesUnit"]');
+        if (sidesUnitEl) {
+            sidesUnitEl.textContent = lang === 'ja' ? `角形` : '';
+        }
+
+        saveSettings();
+    }
+
+    // --- 初期化処理 ---
+    function init() {
+        loadSettings();
+        setLanguage(state.settings.language);
+        setupEventListeners();
+        resizeCanvas();
+        updateChartData(state.settings.sides);
+        updateAndSaveSettings();
+        showPanelView('settings');
+        draw();
+    }
+
+    // --- キャンバスのリサイズ ---
+    function resizeCanvas() {
+        const size = Math.min(canvasContainer.clientWidth, canvasContainer.clientHeight) * 0.95;
+        canvas.width = size;
+        canvas.height = size;
+        draw();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- UI制御 ---
+    function showPanelView(viewName) {
+        activePanelView = viewName;
+        document.querySelectorAll('#panel-content > div').forEach(el => el.classList.add('hidden'));
+        const panel = document.getElementById(`panel-${viewName}`);
+        if(panel) panel.classList.remove('hidden');
+
+        const panelTitle = document.getElementById('panel-title');
+        const backBtn = document.getElementById('back-to-settings-btn');
+        
+        const titles = {
+            settings: translations[state.settings.language].settingsTitle,
+            edit: translations[state.settings.language].modalTitle,
+            save: translations[state.settings.language].saveTitle,
+            load: translations[state.settings.language].loadTitle,
+            export: translations[state.settings.language].exportTitle,
+            help: translations[state.settings.language].helpTitle,
+        };
+        panelTitle.textContent = titles[viewName] || '';
+
+        if (viewName === 'settings' || viewName === 'edit') {
+            backBtn.classList.toggle('hidden', viewName === 'settings');
+        } else {
+            backBtn.classList.add('hidden');
+        }
+    }
+
+    // --- 設定の更新と保存 ---
+    function updateAndSaveSettings() {
+        state.settings.language = document.getElementById('language').value;
+        state.settings.sides = parseInt(document.getElementById('sides').value);
+        state.settings.maxValue = parseInt(document.getElementById('maxValue').value);
+        state.settings.chartLineWidth = parseInt(document.getElementById('chartLineWidth').value);
+        state.settings.chartLineColor = document.getElementById('chartLineColor').value;
+        state.settings.gridLineWidth = parseInt(document.getElementById('gridLineWidth').value);
+        state.settings.gridLineColor = document.getElementById('gridLineColor').value;
+        state.settings.fillColor = document.getElementById('fillColor').value;
+        state.settings.fillOpacity = parseInt(document.getElementById('fillOpacity').value) / 100;
+        state.settings.labelFontSize = parseInt(document.getElementById('labelFontSize').value);
+        if (activePanelView === 'edit') {
+            state.settings.imageClip = document.getElementById('imageClip').value;
+        }
+
+        document.getElementById('sides-value').textContent = state.settings.sides;
+        document.getElementById('maxValue-value').textContent = state.settings.maxValue;
+        document.getElementById('chartLineWidth-value').textContent = state.settings.chartLineWidth;
+        document.getElementById('gridLineWidth-value').textContent = state.settings.gridLineWidth;
+        document.getElementById('fillOpacity-value').textContent = Math.round(state.settings.fillOpacity * 100);
+        document.getElementById('labelFontSize-value').textContent = state.settings.labelFontSize;
+        
+        if (state.chartData.labels.length !== state.settings.sides) {
+            updateChartData(state.settings.sides);
+        }
+
+        saveSettings();
+        draw();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('radarChartSettings', JSON.stringify(state.settings));
+    }
+
+    function loadSettings() {
+        const savedSettings = localStorage.getItem('radarChartSettings');
+        if (savedSettings) {
+            const defaultSettings = state.settings;
+            state.settings = { ...defaultSettings, ...JSON.parse(savedSettings) };
+        }
+        document.getElementById('language').value = state.settings.language;
+        document.getElementById('sides').value = state.settings.sides;
+        document.getElementById('maxValue').value = state.settings.maxValue;
+        document.getElementById('chartLineWidth').value = state.settings.chartLineWidth;
+        document.getElementById('chartLineColor').value = state.settings.chartLineColor;
+        document.getElementById('gridLineWidth').value = state.settings.gridLineWidth;
+        document.getElementById('gridLineColor').value = state.settings.gridLineColor;
+        document.getElementById('imageClip').value = state.settings.imageClip;
+        document.getElementById('fillColor').value = state.settings.fillColor;
+        document.getElementById('fillOpacity').value = state.settings.fillOpacity * 100;
+        document.getElementById('labelFontSize').value = state.settings.labelFontSize;
+    }
+
+    // --- チャートデータの更新 ---
+    function updateChartData(newSides) {
+        const defaultLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+        const currentLength = state.chartData.labels.length;
+
+        if (newSides > currentLength) {
+            for (let i = currentLength; i < newSides; i++) {
+                state.chartData.labels.push(defaultLabels[i]);
+                state.chartData.values.push(1);
+            }
+        } else if (newSides < currentLength) {
+            state.chartData.labels.splice(newSides);
+            state.chartData.values.splice(newSides);
+        }
+    }
+
+    // --- 描画処理 ---
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.75;
+
+        if (state.editMode === 'image' && state.image.element) {
+            drawImage(centerX, centerY, radius);
+        } else if (state.editMode === 'text' && state.text.content) {
+            drawText(centerX, centerY, radius);
+        }
+        
+        drawGrid(centerX, centerY, radius);
+        drawChart(centerX, centerY, radius);
+        drawLabels(centerX, centerY, radius);
+        drawPoints(centerX, centerY, radius);
+    }
+    
+    function drawImage(cx, cy, r) {
+        ctx.save();
+        
+        if (state.settings.imageClip === 'frame' || state.settings.imageClip === 'data') {
+            ctx.beginPath();
+            for (let i = 0; i < state.settings.sides; i++) {
+                let clipRadius = (state.settings.imageClip === 'frame') ? r : (r / state.settings.maxValue) * state.chartData.values[i];
+                const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+                const x = cx + clipRadius * Math.cos(angle);
+                const y = cy + clipRadius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.clip();
+        }
+
+        const img = state.image.element;
+        const polyWidth = r * 2;
+        const polyHeight = r * 2;
+        let drawWidth, drawHeight;
+        const imgAspectRatio = img.width / img.height;
+        
+        if (imgAspectRatio > 1) {
+            drawHeight = polyHeight;
+            drawWidth = drawHeight * imgAspectRatio;
+        } else {
+            drawWidth = polyWidth;
+            drawHeight = drawWidth / imgAspectRatio;
+        }
+        
+        drawWidth *= state.image.scale;
+        drawHeight *= state.image.scale;
+
+        const dx = cx - drawWidth / 2 + state.image.offsetX;
+        const dy = cy - drawHeight / 2 + state.image.offsetY;
+
+        ctx.globalAlpha = state.image.opacity;
+        ctx.drawImage(img, dx, dy, drawWidth, drawHeight);
+        ctx.restore();
+    }
+
+    function drawText(cx, cy, r) {
+        ctx.save();
+        const text = state.text.content;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = state.settings.chartLineColor;
+        let fontSize = 80;
+        ctx.font = `${fontSize}px sans-serif`;
+        while (ctx.measureText(text).width > r * 1.8 && fontSize > 10) {
+            fontSize--;
+            ctx.font = `${fontSize}px sans-serif`;
+        }
+        ctx.fillText(text, cx, cy);
+        ctx.restore();
+    }
+
+    function drawGrid(cx, cy, r) {
+        if (state.settings.gridLineWidth <= 0) return;
+        ctx.strokeStyle = state.settings.gridLineColor;
+        ctx.lineWidth = state.settings.gridLineWidth;
+        for (let j = 1; j <= state.settings.maxValue; j++) {
+            const currentRadius = (r / state.settings.maxValue) * j;
+            ctx.beginPath();
+            for (let i = 0; i < state.settings.sides; i++) {
+                const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+                const x = cx + currentRadius * Math.cos(angle);
+                const y = cy + currentRadius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+        for (let i = 0; i < state.settings.sides; i++) {
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            ctx.stroke();
+        }
+    }
+
+    function drawChart(cx, cy, r) {
+        ctx.strokeStyle = state.settings.chartLineColor;
+        ctx.fillStyle = hexToRgba(state.settings.fillColor, state.settings.fillOpacity);
+        ctx.lineWidth = state.settings.chartLineWidth;
+        ctx.beginPath();
+        for (let i = 0; i < state.settings.sides; i++) {
+            const value = state.chartData.values[i];
+            const currentRadius = (r / state.settings.maxValue) * value;
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            const x = cx + currentRadius * Math.cos(angle);
+            const y = cy + currentRadius * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+    }
+
+    function drawLabels(cx, cy, r) {
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        for (let i = 0; i < state.settings.sides; i++) {
+            const label = state.chartData.labels[i];
+            const value = state.chartData.values[i];
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            const labelRadius = r * 1.15;
+            const x = cx + labelRadius * Math.cos(angle);
+            const y = cy + labelRadius * Math.sin(angle);
+
+            ctx.font = `${state.settings.labelFontSize}px sans-serif`;
+            ctx.fillText(label, x, y);
+            
+            ctx.font = `${state.settings.labelFontSize * 0.8}px sans-serif`;
+            ctx.fillText(`(${value})`, x, y + state.settings.labelFontSize * 1.1);
+        }
+    }
+
+    function drawPoints(cx, cy, r) {
+        for (let i = 0; i < state.settings.sides; i++) {
+            const value = state.chartData.values[i];
+            const currentRadius = (r / state.settings.maxValue) * value;
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            const x = cx + currentRadius * Math.cos(angle);
+            const y = cy + currentRadius * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = state.settings.chartLineColor;
+            ctx.fill();
+        }
+    }
+    
+    // --- イベントリスナー設定 ---
+    function setupEventListeners() {
+        document.getElementById('language').addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        const settingsInputs = [
+            'sides', 'maxValue', 'chartLineWidth', 'chartLineColor', 
+            'gridLineWidth', 'gridLineColor', 'fillColor', 
+            'fillOpacity', 'labelFontSize'
+        ];
+        settingsInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateAndSaveSettings);
+        });
+        
+        document.getElementById('imageClip').addEventListener('change', updateAndSaveSettings);
+
+        // Header buttons
+        document.getElementById('settings-btn').addEventListener('click', () => showPanelView('settings'));
+        document.getElementById('save-btn').addEventListener('click', () => showPanelView('save'));
+        document.getElementById('load-btn').addEventListener('click', () => showPanelView('load'));
+        document.getElementById('export-btn').addEventListener('click', () => showPanelView('export'));
+        document.getElementById('help-btn').addEventListener('click', () => showPanelView('help'));
+        document.getElementById('back-to-settings-btn').addEventListener('click', () => showPanelView('settings'));
+
+        canvasContainer.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); canvasContainer.style.border = '3px dashed #4f46e5'; });
+        canvasContainer.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); canvasContainer.style.border = ''; });
+        canvasContainer.addEventListener('drop', handleImageDrop);
+
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('dblclick', handleDoubleClick);
+        
+        document.getElementById('imageScale').addEventListener('input', updateImageSettings);
+        document.getElementById('imageOpacity').addEventListener('input', updateImageSettings);
+        document.getElementById('imageOffsetX').addEventListener('input', updateImageSettings);
+        document.getElementById('imageOffsetY').addEventListener('input', updateImageSettings);
+        document.getElementById('editMode').addEventListener('change', (e) => { state.editMode = e.target.value; toggleEditControls(); draw(); });
+        document.getElementById('chartText').addEventListener('input', (e) => { state.text.content = e.target.value; draw(); });
+
+        document.getElementById('confirmYes').addEventListener('click', () => {
+            if (typeof confirmAction === 'function') {
+                confirmAction();
+            }
+            hideConfirmDialog();
+        });
+        document.getElementById('confirmNo').addEventListener('click', hideConfirmDialog);
+
+        document.getElementById('resetSettingsButton').addEventListener('click', () => {
+            showConfirmDialog(translations[state.settings.language].confirmReset, () => {
+                const defaultSettings = {
+                    language: 'ja',
+                    sides: 5,
+                    maxValue: 5,
+                    chartLineWidth: 2,
+                    chartLineColor: '#000000',
+                    gridLineWidth: 1,
+                    gridLineColor: '#cccccc',
+                    imageClip: 'data',
+                    fillColor: '#000000',
+                    fillOpacity: 0.3,
+                    labelFontSize: 14,
+                };
+                state.settings = { ...defaultSettings };
+                saveSettings();
+                loadSettings();
+                setLanguage(state.settings.language);
+                updateAndSaveSettings();
+            });
+        });
+
+        document.getElementById('saveButton').addEventListener('click', saveChartData);
+        document.getElementById('loadButton').addEventListener('click', () => document.getElementById('fileInput').click());
+        document.getElementById('fileInput').addEventListener('change', loadChartData);
+        document.getElementById('exportButton').addEventListener('click', exportImage);
+        document.getElementById('exportSize').addEventListener('input', (e) => { document.getElementById('exportSize-value').textContent = e.target.value; });
+    }
+    
+    // --- 画像処理 ---
+    function handleImageDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        canvasContainer.style.border = '';
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            if (state.image.element) {
+                tempImageFile = file;
+                showConfirmDialog(translations[state.settings.language].confirmMessage, () => {
+                    loadImage(file);
+                });
+            } else {
+                loadImage(file);
+            }
+        }
+    }
+
+    function loadImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                state.image.element = img;
+                state.image.name = file.name.split('.').slice(0, -1).join('.');
+                document.getElementById('saveFileName').value = `${state.image.name}+Chart`;
+                document.getElementById('exportFileName').value = `${state.image.name}+Chart`;
+                state.image.scale = 1.0;
+                state.settings.imageClip = 'frame';
+                saveSettings();
+                state.editMode = 'image';
+                document.getElementById('editMode').value = 'image';
+                toggleEditControls();
+                draw();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // --- キャンバスインタラクション ---
+    function getMousePos(e) { const rect = canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+
+    function handleMouseDown(e) {
+        const pos = getMousePos(e);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.75;
+        for (let i = 0; i < state.settings.sides; i++) {
+            const value = state.chartData.values[i];
+            const currentRadius = (radius / state.settings.maxValue) * value;
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            const pointX = centerX + currentRadius * Math.cos(angle);
+            const pointY = centerY + currentRadius * Math.sin(angle);
+            const distance = Math.sqrt(Math.pow(pos.x - pointX, 2) + Math.pow(pos.y - pointY, 2));
+            if (distance < 10) { state.draggingPoint = i; canvas.style.cursor = 'grabbing'; return; }
+        }
+    }
+
+    function handleMouseMove(e) {
+        if (state.draggingPoint === -1) {
+            const pos = getMousePos(e);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.75;
+            let onPoint = false;
+            for (let i = 0; i < state.settings.sides; i++) {
+                const value = state.chartData.values[i];
+                const currentRadius = (radius / state.settings.maxValue) * value;
+                const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+                const pointX = centerX + currentRadius * Math.cos(angle);
+                const pointY = centerY + currentRadius * Math.sin(angle);
+                const distance = Math.sqrt(Math.pow(pos.x - pointX, 2) + Math.pow(pos.y - pointY, 2));
+                if (distance < 10) { onPoint = true; break; }
+            }
+            canvas.style.cursor = onPoint ? 'grab' : 'crosshair';
+            return;
+        }
+        const pos = getMousePos(e);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.75;
+        const dx = pos.x - centerX;
+        const dy = pos.y - centerY;
+        const targetAngle = (state.draggingPoint / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+        const distanceOnAxis = (dx * Math.cos(targetAngle) + dy * Math.sin(targetAngle));
+        let value = (distanceOnAxis / radius) * state.settings.maxValue;
+        value = Math.max(0, Math.min(state.settings.maxValue, Math.round(value)));
+        state.chartData.values[state.draggingPoint] = value;
+        draw();
+    }
+
+    function handleMouseUp() { state.draggingPoint = -1; canvas.style.cursor = 'crosshair'; }
+
+    function handleDoubleClick(e) {
+        const pos = getMousePos(e);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.75;
+        for (let i = 0; i < state.settings.sides; i++) {
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            const labelRadius = radius * 1.15;
+            const labelX = centerX + labelRadius * Math.cos(angle);
+            const labelY = centerY + labelRadius * Math.sin(angle);
+            ctx.font = `${state.settings.labelFontSize}px sans-serif`;
+            const textMetrics = ctx.measureText(state.chartData.labels[i]);
+            const textWidth = textMetrics.width;
+            const textHeight = state.settings.labelFontSize;
+            if (pos.x > labelX - textWidth / 2 && pos.x < labelX + textWidth / 2 && pos.y > labelY - textHeight / 2 && pos.y < labelY + textHeight / 2) {
+                createLabelInput(i, labelX, labelY);
+                return;
+            }
+        }
+        const distance = Math.sqrt(Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2));
+        if (distance < radius) {
+            showPanelView('edit');
+            updateImageEditPanel();
+        }
+    }
+    
+    function createLabelInput(index, x, y) {
+        if(state.editingLabel !== -1) return;
+        state.editingLabel = index;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = state.chartData.labels[index];
+        input.className = 'label-input w-24 text-center border border-indigo-500 rounded-md';
+        input.style.left = `${x}px`;
+        input.style.top = `${y}px`;
+        input.style.fontSize = `${state.settings.labelFontSize}px`;
+        input.addEventListener('blur', () => { state.chartData.labels[index] = input.value; canvasContainer.removeChild(input); state.editingLabel = -1; draw(); });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { input.blur(); } });
+        canvasContainer.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    // --- モーダル・パネル制御 ---
+    function updateImageEditPanel() {
+        document.getElementById('editMode').value = state.editMode;
+        document.getElementById('imageClip').value = state.settings.imageClip;
+        document.getElementById('imageScale').value = state.image.scale * 100;
+        document.getElementById('imageScale-value').textContent = Math.round(state.image.scale * 100);
+        document.getElementById('imageOpacity').value = state.image.opacity * 100;
+        document.getElementById('imageOpacity-value').textContent = Math.round(state.image.opacity * 100);
+        document.getElementById('imageOffsetX').value = state.image.offsetX;
+        document.getElementById('imageOffsetX-value').textContent = state.image.offsetX;
+        document.getElementById('imageOffsetY').value = state.image.offsetY;
+        document.getElementById('imageOffsetY-value').textContent = state.image.offsetY;
+        document.getElementById('chartText').value = state.text.content;
+        toggleEditControls();
+    }
+
+    function toggleEditControls() {
+        if (state.editMode === 'image') {
+            document.getElementById('image-controls').classList.remove('hidden');
+            document.getElementById('text-controls').classList.add('hidden');
+        } else {
+            document.getElementById('image-controls').classList.add('hidden');
+            document.getElementById('text-controls').classList.remove('hidden');
+        }
+    }
+
+    function updateImageSettings() {
+        state.image.opacity = parseInt(document.getElementById('imageOpacity').value) / 100;
+        state.image.offsetX = parseInt(document.getElementById('imageOffsetX').value);
+        state.image.offsetY = parseInt(document.getElementById('imageOffsetY').value);
+        state.image.scale = parseInt(document.getElementById('imageScale').value) / 100;
+        document.getElementById('imageOpacity-value').textContent = Math.round(state.image.opacity * 100);
+        document.getElementById('imageOffsetX-value').textContent = state.image.offsetX;
+        document.getElementById('imageOffsetY-value').textContent = state.image.offsetY;
+        document.getElementById('imageScale-value').textContent = Math.round(state.image.scale * 100);
+        draw();
+    }
+    
+    function showConfirmDialog(message, action) {
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmDialog').classList.remove('hidden');
+        confirmAction = action;
+    }
+
+    function hideConfirmDialog() {
+        document.getElementById('confirmDialog').classList.add('hidden');
+        confirmAction = null;
+    }
+
+    // --- ファイル操作 ---
+    function saveChartData() {
+        const fileNameInput = document.getElementById('saveFileName');
+        let fileName = fileNameInput.value.trim();
+        if (!fileName) { fileName = state.image.name ? `${state.image.name}+Chart.json` : fileNameInput.placeholder; }
+        if (!fileName.endsWith('.json')) { fileName += '.json'; }
+        const dataToSave = {
+            settings: state.settings, chartData: state.chartData,
+            image: { dataUrl: state.image.element ? state.image.element.src : null, name: state.image.name, opacity: state.image.opacity, offsetX: state.image.offsetX, offsetY: state.image.offsetY, scale: state.image.scale },
+            text: state.text, editMode: state.editMode,
+        };
+        const dataStr = JSON.stringify(dataToSave, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function loadChartData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const loadedData = JSON.parse(event.target.result);
+                const defaultSettings = state.settings;
+                state.settings = { ...defaultSettings, ...loadedData.settings };
+                state.chartData = loadedData.chartData;
+                state.text = loadedData.text || { content: '' };
+                state.editMode = loadedData.editMode || 'image';
+                loadSettings();
+                setLanguage(state.settings.language);
+                updateAndSaveSettings();
+                if (loadedData.image && loadedData.image.dataUrl) {
+                    const img = new Image();
+                    img.onload = () => {
+                        state.image.element = img;
+                        state.image.name = loadedData.image.name;
+                        document.getElementById('saveFileName').value = `${state.image.name}+Chart`;
+                        document.getElementById('exportFileName').value = `${state.image.name}+Chart`;
+                        state.image.opacity = loadedData.image.opacity;
+                        state.image.offsetX = loadedData.image.offsetX;
+                        state.image.offsetY = loadedData.image.offsetY;
+                        state.image.scale = loadedData.image.scale || 1.0;
+                        draw();
+                    };
+                    img.src = loadedData.image.dataUrl;
+                } else {
+                    state.image = { element: null, name: '', opacity: 1.0, offsetX: 0, offsetY: 0, scale: 1.0 };
+                    draw();
+                }
+            } catch (error) {
+                console.error("File loading failed:", error);
+                alert(translations[state.settings.language].invalidFile);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportImage() {
+        const fileNameInput = document.getElementById('exportFileName');
+        let fileName = fileNameInput.value.trim();
+        if (!fileName) { fileName = state.image.name ? `${state.image.name}+Chart` : fileNameInput.placeholder; }
+        const format = document.getElementById('exportFormat').value;
+        const size = parseInt(document.getElementById('exportSize').value);
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        const tempCtx = tempCanvas.getContext('2d');
+        const originalDraw = draw;
+        const originalDrawImage = drawImage;
+        const originalDrawGrid = drawGrid;
+        const originalDrawChart = drawChart;
+        const originalDrawLabels = drawLabels;
+        const originalDrawPoints = drawPoints;
+        const tempContext = { ctx: tempCtx };
+        drawImage = originalDrawImage.bind(tempContext);
+        drawGrid = originalDrawGrid.bind(tempContext);
+        drawChart = originalDrawChart.bind(tempContext);
+        drawLabels = originalDrawLabels.bind(tempContext);
+        drawPoints = originalDrawPoints.bind(tempContext);
+        draw = () => {
+            tempCtx.clearRect(0,0,size,size);
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = Math.min(centerX, centerY) * 0.75;
+            if (state.editMode === 'image' && state.image.element) { drawImage(centerX, centerY, radius); }
+            if (state.editMode === 'text' && state.text.content) { drawText.bind(tempContext)(centerX, centerY, radius); }
+            drawGrid(centerX, centerY, radius);
+            drawChart(centerX, centerY, radius);
+            drawLabels(centerX, centerY, radius);
+            drawPoints(centerX, centerY, radius);
+        };
+        draw();
+        const imageType = `image/${format}`;
+        const dataUrl = tempCanvas.toDataURL(imageType, format === 'jpeg' ? 0.9 : 1.0);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `${fileName}.${format}`;
+        a.click();
+        draw = originalDraw;
+        drawImage = originalDrawImage;
+        drawGrid = originalDrawGrid;
+        drawChart = originalDrawChart;
+        drawLabels = originalDrawLabels;
+        drawPoints = originalDrawPoints;
+        draw();
+    }
+    
+    function hexToRgba(hex, alpha) {
+        let r = 0, g = 0, b = 0;
+        if (hex.length == 4) { r = "0x" + hex[1] + hex[1]; g = "0x" + hex[2] + hex[2]; b = "0x" + hex[3] + hex[3]; }
+        else if (hex.length == 7) { r = "0x" + hex[1] + hex[2]; g = "0x" + hex[3] + hex[4]; b = "0x" + hex[5] + hex[6]; }
+        return `rgba(${+r},${+g},${+b},${alpha})`;
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>
