@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像放り込みレーダーチャートメーカー</title>
+    <link rel="icon" href="favicon3.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,11 +108,11 @@
         .menu-btn:hover {
             background-color: #4b5563; /* gray-600 */
         }
-        .menu-btn.active {
-            background-color: #4f46e5; /* indigo-600 */
+        .menu-btn.active-help {
+            background-color: #10b981; /* green-500 */
         }
-        .menu-btn.active:hover {
-            background-color: #4338ca; /* indigo-700 */
+        .menu-btn.active-help:hover {
+            background-color: #059669; /* green-600 */
         }
         .checkbox-label {
             display: flex;
@@ -160,29 +161,34 @@
                             </div>
                         </div>
                         <div>
-                            <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang="labelSides">角の数</span>: <span id="sides-value">5</span><span data-lang="sidesUnit">角形</span></label>
+                            <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang="labelSides">ステータス項目の数</span>: <span id="sides-value">5</span><span data-lang="sidesUnit"></span></label>
                             <input type="range" id="sides" min="4" max="7" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang="labelMaxValue">最大値</span>: <span id="maxValue-value">5</span></label>
+                            <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang="labelMaxValue">ステータスの最大値</span>: <span id="maxValue-value">5</span></label>
                             <input type="range" id="maxValue" min="4" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
-                        <div>
-                            <label for="gridLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang="labelGridLineWidth">枠線の太さ</span>: <span id="gridLineWidth-value">1</span>px</label>
-                            <input type="range" id="gridLineWidth" min="0" max="5" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label for="gridLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang="labelGridLineWidth">枠線の太さ</span>: <span id="gridLineWidth-value">1</span>px</label>
+                                <input type="range" id="gridLineWidth" min="0" max="5" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="gridLineColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelGridLineColor">枠線の色</label>
+                                <input type="color" id="gridLineColor" value="#CCCCCC" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                            </div>
                         </div>
-                        <div>
-                            <label for="gridLineColor" class="block text-sm font-medium text-gray-700" data-lang="labelGridLineColor">枠線の色</label>
-                            <input type="color" id="gridLineColor" value="#CCCCCC" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label for="labelFontSize" class="block text-sm font-medium text-gray-700"><span data-lang="labelLabelFontSize">項目文字サイズ</span>: <span id="labelFontSize-value">20</span>px</label>
+                                <input type="range" id="labelFontSize" min="1" max="60" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                             <div>
+                                <label for="labelColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelColor">項目文字の色</label>
+                                <input type="color" id="labelColor" value="#333333" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                            </div>
                         </div>
-                        <div>
-                            <label for="labelFontSize" class="block text-sm font-medium text-gray-700"><span data-lang="labelLabelFontSize">項目文字サイズ</span>: <span id="labelFontSize-value">20</span>px</label>
-                            <input type="range" id="labelFontSize" min="1" max="60" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                         <div>
-                            <label for="labelColor" class="block text-sm font-medium text-gray-700" data-lang="labelColor">項目文字の色</label>
-                            <input type="color" id="labelColor" value="#333333" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
-                        </div>
+                        <button id="reset-field-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetFieldSettings">フィールド設定をリセット</span></button>
                     </div>
                 </div>
 
@@ -193,22 +199,27 @@
                         <i class="fas fa-chevron-up transition-transform"></i>
                     </button>
                     <div id="chart-settings-content" class="accordion-content mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
-                         <div>
-                            <label for="chartLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang="labelChartLineWidth">チャート線の太さ</span>: <span id="chartLineWidth-value">2</span>px</label>
-                            <input type="range" id="chartLineWidth" min="1" max="10" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label for="chartLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang="labelChartLineWidth">チャート線の太さ</span>: <span id="chartLineWidth-value">2</span>px</label>
+                                <input type="range" id="chartLineWidth" min="1" max="10" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="chartLineColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelChartLineColor">チャート線の色</label>
+                                <input type="color" id="chartLineColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                            </div>
                         </div>
-                        <div>
-                            <label for="chartLineColor" class="block text-sm font-medium text-gray-700" data-lang="labelChartLineColor">チャート線の色</label>
-                            <input type="color" id="chartLineColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                             <div>
+                                <label for="fillOpacity" class="block text-sm font-medium text-gray-700"><span data-lang="labelFillOpacity">塗りつぶしの透過度</span>: <span id="fillOpacity-value">30</span>%</label>
+                                <input type="range" id="fillOpacity" min="0" max="100" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="fillColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelFillColor">チャートの塗りつぶしの色</label>
+                                <input type="color" id="fillColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                            </div>
                         </div>
-                        <div>
-                            <label for="fillColor" class="block text-sm font-medium text-gray-700" data-lang="labelFillColor">チャートの塗りつぶしの色</label>
-                            <input type="color" id="fillColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
-                        </div>
-                        <div>
-                            <label for="fillOpacity" class="block text-sm font-medium text-gray-700"><span data-lang="labelFillOpacity">塗りつぶしの透過度</span>: <span id="fillOpacity-value">30</span>%</label>
-                            <input type="range" id="fillOpacity" min="0" max="100" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
+                         <button id="reset-chart-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetChartSettings">チャート設定をリセット</span></button>
                     </div>
                 </div>
             </div>
@@ -245,11 +256,12 @@
                             <input type="range" id="imageOpacity" min="0" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="imageOffsetX" class="block text-sm font-medium text-gray-700"><span data-lang="labelOffsetX">横位置</span>: <span id="imageOffsetX-value">0</span>px</label>
+                            <label class="block text-sm font-medium text-gray-700" data-lang="labelPosition">位置（横/縦）</label>
+                            <label for="imageOffsetX" class="block text-xs text-gray-500"><span data-lang="labelOffsetX">横</span>: <span id="imageOffsetX-value">0</span>px</label>
                             <input type="range" id="imageOffsetX" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="imageOffsetY" class="block text-sm font-medium text-gray-700"><span data-lang="labelOffsetY">縦位置</span>: <span id="imageOffsetY-value">0</span>px</label>
+                            <label for="imageOffsetY" class="block text-xs text-gray-500"><span data-lang="labelOffsetY">縦</span>: <span id="imageOffsetY-value">0</span>px</label>
                             <input type="range" id="imageOffsetY" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                     </div>
@@ -268,13 +280,15 @@
                                 <option value="Lobster, cursive">Lobster (デザイン)</option>
                             </select>
                         </div>
-                        <div>
-                            <label for="textFontSize" class="block text-sm font-medium text-gray-700"><span data-lang="textFontSize">フォントサイズ</span>: <span id="textFontSize-value">48</span>px</label>
-                            <input type="range" id="textFontSize" min="10" max="150" value="48" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
-                        </div>
-                        <div>
-                            <label for="textColor" class="block text-sm font-medium text-gray-700" data-lang="textColor">テキストの色</label>
-                            <input type="color" id="textColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer mt-1">
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                            <div>
+                                <label for="textFontSize" class="block text-sm font-medium text-gray-700"><span data-lang="textFontSize">フォントサイズ</span>: <span id="textFontSize-value">48</span>px</label>
+                                <input type="range" id="textFontSize" min="10" max="150" value="48" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                            </div>
+                            <div>
+                                <label for="textColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="textColor">テキストの色</label>
+                                <input type="color" id="textColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer mt-1">
+                            </div>
                         </div>
                         <div class="flex items-center justify-around">
                             <label class="checkbox-label">
@@ -296,9 +310,6 @@
 
         </div>
 
-        <div id="panel-footer" class="p-6 border-t">
-            <button id="reset-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetSettings">設定をリセット</span></button>
-        </div>
     </aside>
 
     <!-- メインコンテンツ -->
@@ -341,7 +352,6 @@ window.onload = () => {
     const settingsView = getEl('settings-view');
     const helpView = getEl('help-view');
     const editView = getEl('edit-view');
-    const panelFooter = getEl('panel-footer');
     const helpBtn = getEl('help-btn');
 
     // --- 翻訳データ ---
@@ -357,15 +367,16 @@ window.onload = () => {
             aspectRatioLandscape: "横長",
             labelLabelFontSize: "項目文字サイズ",
             labelColor: "項目文字の色",
-            labelSides: "角の数", sidesUnit: "角形",
-            labelMaxValue: "最大値",
+            labelSides: "ステータス項目の数", sidesUnit: "角形",
+            labelMaxValue: "ステータスの最大値",
             labelChartLineWidth: "チャート線の太さ",
             labelChartLineColor: "チャート線の色",
             labelFillColor: "チャートの塗りつぶしの色",
             labelFillOpacity: "塗りつぶしの透過度",
             labelGridLineWidth: "枠線の太さ",
             labelGridLineColor: "枠線の色",
-            btnResetSettings: "設定をリセット",
+            btnResetFieldSettings: "フィールド設定をリセット",
+            btnResetChartSettings: "チャート設定をリセット",
             exportTitle: "画像として出力",
             labelFileName: "ファイル名",
             labelExportFormat: "拡張子",
@@ -379,11 +390,14 @@ window.onload = () => {
             labelImageClip: "画像表示方法",
             clipData: "チャート形状にクリップ", clipFrame: "グラフの枠にクリップ", clipFull: "全体表示",
             labelScale: "拡大縮小",
-            labelOpacity: "透過度", labelOffsetX: "横位置", labelOffsetY: "縦位置",
+            labelOpacity: "透過度", 
+            labelPosition: "位置（横/縦）",
+            labelOffsetX: "横", 
+            labelOffsetY: "縦",
             confirmTitle: "確認",
             btnNo: "いいえ", btnYes: "はい",
             confirmMessage: "画像を置き換えますか？",
-            confirmReset: "すべての設定を初期値に戻します。よろしいですか？",
+            confirmReset: "このセクションの設定を初期値に戻します。よろしいですか？",
             invalidFile: "無効なファイル形式です。",
             savePlaceholder: "チャートデータ",
             exportPlaceholder: "レーダーチャート",
@@ -408,15 +422,16 @@ window.onload = () => {
             aspectRatioLandscape: "Landscape",
             labelLabelFontSize: "Label Font Size",
             labelColor: "Label Color",
-            labelSides: "Sides", sidesUnit: "",
-            labelMaxValue: "Max Value",
+            labelSides: "Number of Status Items", sidesUnit: "",
+            labelMaxValue: "Status Max Value",
             labelChartLineWidth: "Chart Line Width",
             labelChartLineColor: "Chart Line Color",
             labelFillColor: "Chart Fill Color",
             labelFillOpacity: "Fill Opacity",
             labelGridLineWidth: "Grid Line Width",
             labelGridLineColor: "Grid Line Color",
-            btnResetSettings: "Reset Settings",
+            btnResetFieldSettings: "Reset Field Settings",
+            btnResetChartSettings: "Reset Chart Settings",
             exportTitle: "Export as Image",
             labelFileName: "File Name",
             labelExportFormat: "Format",
@@ -430,11 +445,14 @@ window.onload = () => {
             labelImageClip: "Image Display Method",
             clipData: "Clip to data shape", clipFrame: "Clip to chart frame", clipFull: "Show full image",
             labelScale: "Scale",
-            labelOpacity: "Opacity", labelOffsetX: "Offset X", labelOffsetY: "Offset Y",
+            labelOpacity: "Opacity", 
+            labelPosition: "Position (H/V)",
+            labelOffsetX: "Horizontal", 
+            labelOffsetY: "Vertical",
             confirmTitle: "Confirm",
             btnNo: "No", btnYes: "Yes",
             confirmMessage: "Do you want to replace the image?",
-            confirmReset: "Reset all settings to their default values. Are you sure?",
+            confirmReset: "Are you sure you want to reset the settings in this section?",
             invalidFile: "Invalid file format.",
             savePlaceholder: "ChartData",
             exportPlaceholder: "RadarChart",
@@ -505,7 +523,7 @@ window.onload = () => {
     function getDefaultSettings() {
         return {
             language: 'ja',
-            aspectRatio: 'square',
+            aspectRatio: 'landscape',
             sides: 5, 
             maxValue: 5, 
             gridLineWidth: 1, 
@@ -556,20 +574,18 @@ window.onload = () => {
         helpView.classList.add('hidden');
         editView.classList.add('hidden');
         backToSettingsBtn.classList.add('hidden');
-        panelFooter.classList.add('hidden');
         
-        document.querySelectorAll('.menu-btn.active').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.menu-btn.active-help').forEach(b => b.classList.remove('active-help'));
 
         if (view === 'settings') {
             panelTitle.textContent = t('settingsTitle');
             settingsView.classList.remove('hidden');
-            panelFooter.classList.remove('hidden');
         } else if (view === 'help') {
             panelTitle.textContent = t('helpTitle');
             helpView.innerHTML = getHelpContent(state.settings.language);
             helpView.classList.remove('hidden');
             backToSettingsBtn.classList.remove('hidden');
-            helpBtn.classList.add('active');
+            helpBtn.classList.add('active-help');
         } else if (view === 'edit') {
             panelTitle.textContent = t('editTitle');
             editView.classList.remove('hidden');
@@ -738,7 +754,7 @@ window.onload = () => {
         if (state.settings.aspectRatio === 'landscape' && width / height > 1.1) {
             const chartAreaSize = height;
              return {
-                cx: cx,
+                cx: cx, // Center in the full canvas width
                 cy: cy,
                 r: (chartAreaSize / 2) * 0.75,
                 textCenterX: cx,
@@ -884,8 +900,12 @@ window.onload = () => {
             const value = state.chartData.values[i];
             const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
             
-            const x = cx + labelRadius * Math.cos(angle);
-            const y = cy + labelRadius * Math.sin(angle);
+            let x = cx + labelRadius * Math.cos(angle);
+            let y = cy + labelRadius * Math.sin(angle);
+
+            if (i === 0) { // Top label
+                y -= state.settings.labelFontSize * 0.5;
+            }
 
             targetCtx.font = `${state.settings.labelFontSize}px sans-serif`;
             targetCtx.fillText(label, x, y);
@@ -947,12 +967,21 @@ window.onload = () => {
         document.querySelectorAll('input[name="aspectRatio"]').forEach(radio => {
             radio.addEventListener('change', updateAndSaveSettings);
         });
-        getEl('reset-settings-btn').addEventListener('click', () => {
+        getEl('reset-field-settings-btn').addEventListener('click', () => {
             showConfirmDialog(t('confirmReset'), () => {
-                resetState();
-                saveSettings();
-                loadSettings();
-                updateLanguage();
+                const defaults = getDefaultSettings();
+                const fieldKeys = ['aspectRatio', 'sides', 'maxValue', 'gridLineWidth', 'gridLineColor', 'labelFontSize', 'labelColor'];
+                fieldKeys.forEach(key => state.settings[key] = defaults[key]);
+                updateSettingsUI();
+                updateAndSaveSettings();
+            });
+        });
+        getEl('reset-chart-settings-btn').addEventListener('click', () => {
+             showConfirmDialog(t('confirmReset'), () => {
+                const defaults = getDefaultSettings();
+                const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity'];
+                chartKeys.forEach(key => state.settings[key] = defaults[key]);
+                updateSettingsUI();
                 updateAndSaveSettings();
             });
         });
