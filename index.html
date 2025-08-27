@@ -120,8 +120,16 @@
             cursor: pointer;
         }
         .accordion-content {
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.3s ease-out, visibility 0.3s, opacity 0.3s;
             overflow: hidden;
+            max-height: 0;
+            visibility: hidden;
+            opacity: 0;
+        }
+        .accordion-content.open {
+            max-height: 1000px; /* 十分な高さを確保 */
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
@@ -142,22 +150,38 @@
             <div id="settings-view" class="space-y-4">
                 <!-- フィールド設定 -->
                 <div>
-                    <button id="field-settings-toggle" class="w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    <button data-accordion-toggle="field-settings-content" class="w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                         <span class="font-semibold" data-lang="fieldSettingsTitle">フィールド設定</span>
-                        <i class="fas fa-chevron-up transition-transform"></i>
+                        <i class="fas fa-chevron-down transition-transform"></i>
                     </button>
                     <div id="field-settings-content" class="accordion-content mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
+                        <!-- ▼▼▼▼▼ ここから修正 ▼▼▼▼▼ -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700" data-lang="labelAspectRatio">フィールドサイズ</label>
+                            <label class="block text-sm font-medium text-gray-700" data-lang="labelGraphSize">グラフサイズ</label>
                             <div class="mt-2 flex space-x-4">
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="aspectRatio" value="square" class="form-radio">
-                                    <span class="ml-2" data-lang="aspectRatioSquare">正方形</span>
+                                    <input type="radio" name="graphSize" value="large" class="form-radio">
+                                    <span class="ml-2 text-sm" data-lang="graphSizeLarge">大</span>
                                 </label>
                                 <label class="inline-flex items-center">
-                                    <input type="radio" name="aspectRatio" value="landscape">
-                                    <span class="ml-2" data-lang="aspectRatioLandscape">横長</span>
+                                    <input type="radio" name="graphSize" value="medium">
+                                    <span class="ml-2 text-sm" data-lang="graphSizeMedium">中</span>
                                 </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="graphSize" value="small">
+                                    <span class="ml-2 text-sm" data-lang="graphSizeSmall">小</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲ -->
+                        <div class="grid grid-cols-2 gap-4 items-center">
+                             <div>
+                                <label for="backgroundColorOpacity" class="block text-sm font-medium text-gray-700"><span data-lang="labelBackgroundColorOpacity">背景の透過度</span>: <span id="backgroundColorOpacity-value">100</span>%</label>
+                                <input type="range" id="backgroundColorOpacity" min="0" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="backgroundColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelBackgroundColor">背景色</label>
+                                <input type="color" id="backgroundColor" value="#FFFFFF" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
                         <div>
@@ -194,9 +218,9 @@
 
                 <!-- チャート設定 -->
                 <div>
-                    <button id="chart-settings-toggle" class="w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    <button data-accordion-toggle="chart-settings-content" class="w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                         <span class="font-semibold" data-lang="chartSettingsTitle">チャート設定</span>
-                        <i class="fas fa-chevron-up transition-transform"></i>
+                        <i class="fas fa-chevron-down transition-transform"></i>
                     </button>
                     <div id="chart-settings-content" class="accordion-content mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
                         <div class="grid grid-cols-2 gap-4 items-center">
@@ -257,11 +281,9 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700" data-lang="labelPosition">位置（横/縦）</label>
-                            <label for="imageOffsetX" class="block text-xs text-gray-500"><span data-lang="labelOffsetX">横</span>: <span id="imageOffsetX-value">0</span>px</label>
+                            <label for="imageOffsetX" class="block text-xs text-gray-500 mt-2"><span data-lang="labelOffsetX">横</span></label>
                             <input type="range" id="imageOffsetX" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                        <div>
-                            <label for="imageOffsetY" class="block text-xs text-gray-500"><span data-lang="labelOffsetY">縦</span>: <span id="imageOffsetY-value">0</span>px</label>
+                            <label for="imageOffsetY" class="block text-xs text-gray-500 mt-2"><span data-lang="labelOffsetY">縦</span></label>
                             <input type="range" id="imageOffsetY" min="-200" max="200" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                     </div>
@@ -304,6 +326,7 @@
                                 <span class="ml-2 text-sm font-medium text-gray-700" data-lang="textHasShadow">影</span>
                             </label>
                         </div>
+                        <button id="reset-text-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetTextSettings">テキスト設定をリセット</span></button>
                     </div>
                 </div>
             </div>
@@ -353,18 +376,23 @@ window.onload = () => {
     const helpView = getEl('help-view');
     const editView = getEl('edit-view');
     const helpBtn = getEl('help-btn');
+    const modalContainer = getEl('modal-container');
 
     // --- 翻訳データ ---
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     const translations = {
         ja: {
             appTitle: "画像放り込みレーダーチャートメーカー",
             settings: "設定", save: "保存", load: "呼び出し", export: "画像出力", help: "操作方法",
-            settingsTitle: "チャート設定",
+            settingsTitle: "設定",
             fieldSettingsTitle: "フィールド設定",
             chartSettingsTitle: "チャート設定",
-            labelAspectRatio: "フィールドサイズ",
-            aspectRatioSquare: "正方形",
-            aspectRatioLandscape: "横長",
+            labelGraphSize: "グラフサイズ",
+            graphSizeLarge: "大",
+            graphSizeMedium: "中",
+            graphSizeSmall: "小",
+            labelBackgroundColor: "背景色",
+            labelBackgroundColorOpacity: "背景の透過度",
             labelLabelFontSize: "項目文字サイズ",
             labelColor: "項目文字の色",
             labelSides: "ステータス項目の数", sidesUnit: "角形",
@@ -377,6 +405,7 @@ window.onload = () => {
             labelGridLineColor: "枠線の色",
             btnResetFieldSettings: "フィールド設定をリセット",
             btnResetChartSettings: "チャート設定をリセット",
+            btnResetTextSettings: "テキスト設定をリセット",
             exportTitle: "画像として出力",
             labelFileName: "ファイル名",
             labelExportFormat: "拡張子",
@@ -395,10 +424,11 @@ window.onload = () => {
             labelOffsetX: "横", 
             labelOffsetY: "縦",
             confirmTitle: "確認",
-            btnNo: "いいえ", btnYes: "はい",
+            infoTitle: "情報",
+            btnNo: "いいえ", btnYes: "はい", btnOK: "OK", btnCancel: "キャンセル",
             confirmMessage: "画像を置き換えますか？",
             confirmReset: "このセクションの設定を初期値に戻します。よろしいですか？",
-            invalidFile: "無効なファイル形式です。",
+            invalidFile: "無効なファイル形式です。正しいJSONファイルを指定してください。",
             savePlaceholder: "チャートデータ",
             exportPlaceholder: "レーダーチャート",
             lang_toggle_en: "English",
@@ -414,12 +444,15 @@ window.onload = () => {
         en: {
             appTitle: "Image Drop Radar Chart Maker",
             settings: "Settings", save: "Save", load: "Load", export: "Export", help: "Help",
-            settingsTitle: "Chart Settings",
+            settingsTitle: "Settings",
             fieldSettingsTitle: "Field Settings",
             chartSettingsTitle: "Chart Settings",
-            labelAspectRatio: "Field Size",
-            aspectRatioSquare: "Square",
-            aspectRatioLandscape: "Landscape",
+            labelGraphSize: "Graph Size",
+            graphSizeLarge: "Large",
+            graphSizeMedium: "Medium",
+            graphSizeSmall: "Small",
+            labelBackgroundColor: "Background Color",
+            labelBackgroundColorOpacity: "Background Opacity",
             labelLabelFontSize: "Label Font Size",
             labelColor: "Label Color",
             labelSides: "Number of Status Items", sidesUnit: "",
@@ -432,6 +465,7 @@ window.onload = () => {
             labelGridLineColor: "Grid Line Color",
             btnResetFieldSettings: "Reset Field Settings",
             btnResetChartSettings: "Reset Chart Settings",
+            btnResetTextSettings: "Reset Text Settings",
             exportTitle: "Export as Image",
             labelFileName: "File Name",
             labelExportFormat: "Format",
@@ -450,10 +484,11 @@ window.onload = () => {
             labelOffsetX: "Horizontal", 
             labelOffsetY: "Vertical",
             confirmTitle: "Confirm",
-            btnNo: "No", btnYes: "Yes",
+            infoTitle: "Information",
+            btnNo: "No", btnYes: "Yes", btnOK: "OK", btnCancel: "Cancel",
             confirmMessage: "Do you want to replace the image?",
             confirmReset: "Are you sure you want to reset the settings in this section?",
-            invalidFile: "Invalid file format.",
+            invalidFile: "Invalid file format. Please specify a correct JSON file.",
             savePlaceholder: "ChartData",
             exportPlaceholder: "RadarChart",
             lang_toggle_en: "English",
@@ -467,6 +502,7 @@ window.onload = () => {
             textHasShadow: "Shadow",
         }
     };
+    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     function getHelpContent(lang) {
         return lang === 'ja' ? `
@@ -483,7 +519,7 @@ window.onload = () => {
             </ul>
             <h3 class="font-semibold mt-4 mb-2">設定のカスタマイズ</h3>
             <ul class="list-disc list-inside space-y-1">
-                <li><strong>各種設定:</strong> 左側の「チャート設定」パネルで、チャートの形、色、線の太さなどを変更できます。設定は自動で保存されます。</li>
+                <li><strong>各種設定:</strong> 左側の設定パネルで、チャートの形、色、線の太さなどを変更できます。設定は自動で保存されます。</li>
             </ul>
         ` : `
             <h3 class="font-semibold mb-2">Image Settings</h3>
@@ -499,7 +535,7 @@ window.onload = () => {
             </ul>
             <h3 class="font-semibold mt-4 mb-2">Customization</h3>
             <ul class="list-disc list-inside space-y-1">
-                <li><strong>Various Settings:</strong> Change the chart's shape, colors, line widths, etc., in the 'Chart Settings' panel. Settings are saved automatically.</li>
+                <li><strong>Various Settings:</strong> Change the chart's shape, colors, line widths, etc., in the 'Settings' panel. Settings are saved automatically.</li>
             </ul>
         `;
     }
@@ -507,6 +543,9 @@ window.onload = () => {
     // --- 状態管理 ---
     let state = {};
     let chartGeometry = {};
+    let history = [];
+    let historyIndex = -1;
+    let isApplyingState = false;
     
     function getDefaultTextSettings() {
         return {
@@ -520,10 +559,13 @@ window.onload = () => {
         };
     }
 
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function getDefaultSettings() {
         return {
             language: 'ja',
-            aspectRatio: 'landscape',
+            graphSize: 'large',
+            backgroundColor: '#FFFFFF',
+            backgroundColorOpacity: 1,
             sides: 5, 
             maxValue: 5, 
             gridLineWidth: 1, 
@@ -534,9 +576,10 @@ window.onload = () => {
             chartLineColor: '#000000',
             fillColor: '#000000',
             fillOpacity: 0.3, 
-            imageClip: 'data',
+            imageClip: 'full',
         };
     }
+    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     function resetState() {
         state = {
@@ -564,8 +607,8 @@ window.onload = () => {
         updateLanguage();
         resizeCanvas();
         updateChartData(state.settings.sides);
-        updateAndSaveSettings();
-        draw();
+        updateAllSettings(false); // Don't save history on initial load
+        saveStateToHistory(); // Save the very first state
     }
 
     // --- パネルビュー管理 ---
@@ -621,33 +664,24 @@ window.onload = () => {
     }
 
     // --- キャンバスのリサイズ ---
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function resizeCanvas() {
         const rect = canvasContainer.getBoundingClientRect();
-        
-        if (state.settings.aspectRatio === 'square') {
-            const size = Math.min(rect.width, rect.height);
-            canvas.width = size;
-            canvas.height = size;
-        } else { // landscape
-            const containerW = rect.width;
-            const containerH = rect.height;
-            const targetRatio = 1.2;
-
-            if (containerW / containerH > targetRatio) {
-                canvas.height = containerH;
-                canvas.width = containerH * targetRatio;
-            } else {
-                canvas.width = containerW;
-                canvas.height = containerW / targetRatio;
-            }
-        }
+        const size = Math.min(rect.width, rect.height);
+        canvas.width = size;
+        canvas.height = size;
         draw();
     }
+    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
     window.addEventListener('resize', resizeCanvas);
 
     // --- 設定の更新と保存 ---
-    function updateAndSaveSettings() {
-        state.settings.aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+    function updateAllSettings(saveHistory = true) {
+        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
+        state.settings.graphSize = document.querySelector('input[name="graphSize"]:checked').value;
+        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
+        state.settings.backgroundColor = getEl('backgroundColor').value;
+        state.settings.backgroundColorOpacity = parseInt(getEl('backgroundColorOpacity').value) / 100;
         state.settings.sides = parseInt(getEl('sides').value);
         state.settings.maxValue = parseInt(getEl('maxValue').value);
         state.settings.chartLineWidth = parseInt(getEl('chartLineWidth').value);
@@ -660,12 +694,7 @@ window.onload = () => {
         state.settings.labelColor = getEl('labelColor').value;
         state.settings.imageClip = getEl('imageClip').value;
         
-        getEl('sides-value').textContent = state.settings.sides;
-        getEl('maxValue-value').textContent = state.settings.maxValue;
-        getEl('chartLineWidth-value').textContent = state.settings.chartLineWidth;
-        getEl('gridLineWidth-value').textContent = state.settings.gridLineWidth;
-        getEl('fillOpacity-value').textContent = Math.round(state.settings.fillOpacity * 100);
-        getEl('labelFontSize-value').textContent = state.settings.labelFontSize;
+        updateValueDisplays();
         
         if (state.chartData.labels.length !== state.settings.sides) {
             updateChartData(state.settings.sides);
@@ -673,10 +702,28 @@ window.onload = () => {
 
         saveSettings();
         resizeCanvas();
+        if(saveHistory) saveStateToHistory();
+    }
+    
+    function updateValueDisplays() {
+        getEl('backgroundColorOpacity-value').textContent = getEl('backgroundColorOpacity').value;
+        getEl('sides-value').textContent = getEl('sides').value;
+        getEl('maxValue-value').textContent = getEl('maxValue').value;
+        getEl('chartLineWidth-value').textContent = getEl('chartLineWidth').value;
+        getEl('gridLineWidth-value').textContent = getEl('gridLineWidth').value;
+        getEl('fillOpacity-value').textContent = getEl('fillOpacity').value;
+        getEl('labelFontSize-value').textContent = getEl('labelFontSize').value;
+        getEl('imageScale-value').textContent = getEl('imageScale').value;
+        getEl('imageOpacity-value').textContent = getEl('imageOpacity').value;
+        getEl('textFontSize-value').textContent = getEl('textFontSize').value;
     }
 
     function saveSettings() {
         localStorage.setItem('radarChartSettingsUnified', JSON.stringify(state.settings));
+        localStorage.setItem('radarChartAccordion', JSON.stringify({
+            field: getEl('field-settings-content').classList.contains('open'),
+            chart: getEl('chart-settings-content').classList.contains('open')
+        }));
     }
 
     function loadSettings() {
@@ -688,20 +735,38 @@ window.onload = () => {
             state.settings = defaultSettings;
         }
         updateSettingsUI();
+
+        const savedAccordion = localStorage.getItem('radarChartAccordion');
+        if (savedAccordion) {
+            const accordionState = JSON.parse(savedAccordion);
+            if (accordionState.field) toggleAccordion('field-settings-content', true);
+            if (accordionState.chart) toggleAccordion('chart-settings-content', true);
+        } else {
+             toggleAccordion('field-settings-content', true);
+             toggleAccordion('chart-settings-content', true);
+        }
     }
 
     function updateSettingsUI() {
-        document.querySelector(`input[name="aspectRatio"][value="${state.settings.aspectRatio}"]`).checked = true;
+        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
+        // 古い設定（aspectRatio）からの移行
+        if (state.settings.aspectRatio) {
+            state.settings.graphSize = 'large';
+            delete state.settings.aspectRatio;
+        }
+        document.querySelector(`input[name="graphSize"][value="${state.settings.graphSize}"]`).checked = true;
+        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
         Object.keys(state.settings).forEach(key => {
             const el = getEl(key);
-            if(el) {
-                if (key === 'fillOpacity') {
+            if(el && key !== 'graphSize') { // graphSizeは上で処理済み
+                if (key === 'fillOpacity' || key === 'backgroundColorOpacity') {
                     el.value = state.settings[key] * 100;
                 } else {
                     el.value = state.settings[key];
                 }
             }
         });
+        updateValueDisplays();
     }
 
     // --- チャートデータの更新 ---
@@ -720,8 +785,8 @@ window.onload = () => {
         }
     }
     
-    function drawOnContext(targetCtx, width, height, geometry) {
-        targetCtx.clearRect(0, 0, width, height);
+    function drawOnContext(targetCtx, width, height, geometry, options = {}) {
+        drawBackground(targetCtx, width, height, options);
 
         const { cx, cy, r, textCenterX, textCenterY, maxTextWidth } = geometry;
 
@@ -746,32 +811,43 @@ window.onload = () => {
         drawOnContext(ctx, width, height, geometry);
     }
 
+    function drawBackground(targetCtx, width, height, options = {}) {
+        const opacity = options.forceOpaqueBackground ? 1.0 : state.settings.backgroundColorOpacity;
+        targetCtx.fillStyle = hexToRgba(state.settings.backgroundColor, opacity);
+        targetCtx.fillRect(0, 0, width, height);
+    }
+
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function calculateGeometry(width, height) {
         const cx = width / 2;
         const cy = height / 2;
-        let r = Math.min(width, height) / 2 * 0.75;
+        const baseRadius = Math.min(width, height) / 2;
 
-        if (state.settings.aspectRatio === 'landscape' && width / height > 1.1) {
-            const chartAreaSize = height;
-             return {
-                cx: cx, // Center in the full canvas width
-                cy: cy,
-                r: (chartAreaSize / 2) * 0.75,
-                textCenterX: cx,
-                textCenterY: cy,
-                maxTextWidth: r * 1.8,
-            };
-        } else {
-            return {
-                cx: cx,
-                cy: cy,
-                r: r,
-                textCenterX: cx,
-                textCenterY: cy,
-                maxTextWidth: r * 1.8,
-            };
+        let radiusMultiplier;
+        switch (state.settings.graphSize) {
+            case 'medium':
+                radiusMultiplier = 0.65;
+                break;
+            case 'small':
+                radiusMultiplier = 0.55;
+                break;
+            case 'large':
+            default:
+                radiusMultiplier = 0.75;
+                break;
         }
+        const r = baseRadius * radiusMultiplier;
+
+        return {
+            cx: cx,
+            cy: cy,
+            r: r,
+            textCenterX: cx,
+            textCenterY: cy,
+            maxTextWidth: r * 1.8,
+        };
     }
+    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
     
     function drawImage(targetCtx, cx, cy, r) {
         targetCtx.save();
@@ -933,7 +1009,7 @@ window.onload = () => {
     function setupEventListeners() {
         // Header buttons
         helpBtn.addEventListener('click', () => showPanelView('help'));
-        getEl('save-btn').addEventListener('click', saveChartData);
+        getEl('save-btn').addEventListener('click', showSaveModal);
         getEl('load-btn').addEventListener('click', () => getEl('load-input').click());
         getEl('load-input').addEventListener('change', loadChartData);
         getEl('export-btn').addEventListener('click', showExportModal);
@@ -947,33 +1023,60 @@ window.onload = () => {
         backToSettingsBtn.addEventListener('click', () => showPanelView('settings'));
 
         // Accordion
-        ['field-settings', 'chart-settings'].forEach(id => {
-            const toggle = getEl(`${id}-toggle`);
-            const content = getEl(`${id}-content`);
-            const icon = toggle.querySelector('i');
-            toggle.addEventListener('click', () => {
-                content.classList.toggle('hidden');
-                icon.classList.toggle('fa-chevron-up');
-                icon.classList.toggle('fa-chevron-down');
+        document.querySelectorAll('[data-accordion-toggle]').forEach(button => {
+            button.addEventListener('click', () => {
+                const contentId = button.getAttribute('data-accordion-toggle');
+                toggleAccordion(contentId);
+                saveSettings(); // Save accordion state
             });
         });
 
         // Settings view inputs
-        const settingsInputs = [
-            'sides', 'maxValue', 'chartLineWidth', 'chartLineColor', 'gridLineWidth', 
-            'gridLineColor', 'fillColor', 'fillOpacity', 'labelFontSize', 'labelColor'
-        ];
-        settingsInputs.forEach(id => getEl(id).addEventListener('input', updateAndSaveSettings));
-        document.querySelectorAll('input[name="aspectRatio"]').forEach(radio => {
-            radio.addEventListener('change', updateAndSaveSettings);
+        const allRangeInputs = document.querySelectorAll('#settings-view input[type="range"], #edit-view input[type="range"]');
+        allRangeInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                updateValueDisplays();
+                if (input.id.startsWith('image')) {
+                    updateImageSettings(false);
+                } else if (input.id.startsWith('text')) {
+                    updateTextSettings(false);
+                } else {
+                    updateAllSettings(false);
+                }
+            });
+            input.addEventListener('change', (e) => {
+                e.target.blur();
+                saveStateToHistory();
+            });
         });
+        
+        const allChangeInputs = document.querySelectorAll('#settings-view input[type="color"], #settings-view input[type="radio"], #edit-view select, #edit-view input[type="color"], #edit-view input[type="checkbox"], #edit-view textarea');
+        allChangeInputs.forEach(input => {
+            const eventType = (input.type === 'checkbox' || input.type === 'radio' || input.tagName === 'SELECT') ? 'change' : 'input';
+            input.addEventListener(eventType, () => {
+                if (input.id.startsWith('image')) {
+                    updateImageSettings();
+                } else if (input.id.startsWith('text')) {
+                    updateTextSettings();
+                } else if (input.id === 'editMode') {
+                    state.editMode = input.value;
+                    toggleEditControls();
+                    draw();
+                    saveStateToHistory();
+                } else {
+                    updateAllSettings();
+                }
+            });
+        });
+
+        // Reset buttons
         getEl('reset-field-settings-btn').addEventListener('click', () => {
             showConfirmDialog(t('confirmReset'), () => {
                 const defaults = getDefaultSettings();
-                const fieldKeys = ['aspectRatio', 'sides', 'maxValue', 'gridLineWidth', 'gridLineColor', 'labelFontSize', 'labelColor'];
+                const fieldKeys = ['graphSize', 'backgroundColor', 'backgroundColorOpacity', 'sides', 'maxValue', 'gridLineWidth', 'gridLineColor', 'labelFontSize', 'labelColor'];
                 fieldKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
-                updateAndSaveSettings();
+                updateAllSettings();
             });
         });
         getEl('reset-chart-settings-btn').addEventListener('click', () => {
@@ -982,33 +1085,14 @@ window.onload = () => {
                 const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity'];
                 chartKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
-                updateAndSaveSettings();
+                updateAllSettings();
             });
         });
-
-        // Edit view inputs
-        getEl('imageClip').addEventListener('change', updateAndSaveSettings);
-        getEl('imageScale').addEventListener('input', updateImageSettings);
-        getEl('imageOpacity').addEventListener('input', updateImageSettings);
-        getEl('imageOffsetX').addEventListener('input', updateImageSettings);
-        getEl('imageOffsetY').addEventListener('input', updateImageSettings);
-        getEl('editMode').addEventListener('change', (e) => { state.editMode = e.target.value; toggleEditControls(); draw(); });
-        
-        // Text controls
-        const textControls = ['textValue', 'textFontFamily', 'textFontSize', 'textColor', 'textFontBold', 'textFontItalic', 'textHasShadow'];
-        textControls.forEach(id => {
-            const el = getEl(id);
-            const eventType = el.type === 'checkbox' ? 'change' : 'input';
-            el.addEventListener(eventType, () => {
-                state.text.value = getEl('textValue').value;
-                state.text.fontFamily = getEl('textFontFamily').value;
-                state.text.fontSize = parseInt(getEl('textFontSize').value);
-                state.text.color = getEl('textColor').value;
-                state.text.isBold = getEl('textFontBold').checked;
-                state.text.isItalic = getEl('textFontItalic').checked;
-                state.text.hasShadow = getEl('textHasShadow').checked;
-                getEl('textFontSize-value').textContent = state.text.fontSize;
-                draw();
+        getEl('reset-text-settings-btn').addEventListener('click', () => {
+            showConfirmDialog(t('confirmReset'), () => {
+                state.text = getDefaultTextSettings();
+                updateEditViewUI();
+                updateTextSettings();
             });
         });
 
@@ -1022,6 +1106,42 @@ window.onload = () => {
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('dblclick', handleDoubleClick);
+
+        // Undo/Redo
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key === 'z' && !e.shiftKey;
+            const isRedo = (isMac ? e.metaKey && e.shiftKey : e.ctrlKey) && e.key === 'y' || (isMac && e.metaKey && e.shiftKey && e.key === 'z');
+
+            if (isUndo) {
+                e.preventDefault();
+                undo();
+            } else if (isRedo) {
+                e.preventDefault();
+                redo();
+            }
+        });
+    }
+    
+    function toggleAccordion(contentId, forceOpen = null) {
+        const content = getEl(contentId);
+        const button = document.querySelector(`[data-accordion-toggle="${contentId}"]`);
+        const icon = button.querySelector('i');
+        const isOpen = content.classList.contains('open');
+
+        if (forceOpen === true || (forceOpen === null && !isOpen)) {
+            content.classList.add('open');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else if (forceOpen === false || (forceOpen === null && isOpen)) {
+            content.classList.remove('open');
+            icon.classList.add('fa-chevron-down');
+            icon.classList.remove('fa-chevron-up');
+        }
     }
     
     // --- 画像処理 ---
@@ -1047,10 +1167,11 @@ window.onload = () => {
                 state.image.element = img;
                 state.image.name = file.name.split('.').slice(0, -1).join('.');
                 state.image.scale = 1.0;
-                state.settings.imageClip = 'frame';
+                state.settings.imageClip = 'full';
                 saveSettings();
                 state.editMode = 'image';
                 draw();
+                saveStateToHistory();
             };
             img.src = e.target.result;
         };
@@ -1102,7 +1223,13 @@ window.onload = () => {
         draw();
     }
 
-    function handleMouseUp() { state.draggingPoint = -1; canvas.style.cursor = 'crosshair'; }
+    function handleMouseUp() { 
+        if (state.draggingPoint !== -1) {
+            saveStateToHistory();
+        }
+        state.draggingPoint = -1; 
+        canvas.style.cursor = 'crosshair'; 
+    }
 
     function handleDoubleClick(e) {
         const pos = getMousePos(e);
@@ -1142,6 +1269,7 @@ window.onload = () => {
             canvasContainer.removeChild(input);
             state.editingLabel = -1;
             draw();
+            saveStateToHistory();
         });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { input.blur(); } });
         canvasContainer.appendChild(input);
@@ -1155,24 +1283,20 @@ window.onload = () => {
         // Image controls
         getEl('imageClip').value = state.settings.imageClip;
         getEl('imageScale').value = state.image.scale * 100;
-        getEl('imageScale-value').textContent = Math.round(state.image.scale * 100);
         getEl('imageOpacity').value = state.image.opacity * 100;
-        getEl('imageOpacity-value').textContent = Math.round(state.image.opacity * 100);
         getEl('imageOffsetX').value = state.image.offsetX;
-        getEl('imageOffsetX-value').textContent = state.image.offsetX;
         getEl('imageOffsetY').value = state.image.offsetY;
-        getEl('imageOffsetY-value').textContent = state.image.offsetY;
         // Text controls
         const txt = state.text;
         getEl('textValue').value = txt.value;
         getEl('textFontFamily').value = txt.fontFamily;
         getEl('textFontSize').value = txt.fontSize;
-        getEl('textFontSize-value').textContent = txt.fontSize;
         getEl('textColor').value = txt.color;
         getEl('textFontBold').checked = txt.isBold;
         getEl('textFontItalic').checked = txt.isItalic;
         getEl('textHasShadow').checked = txt.hasShadow;
 
+        updateValueDisplays();
         toggleEditControls();
     }
 
@@ -1186,21 +1310,36 @@ window.onload = () => {
         }
     }
 
-    function updateImageSettings() {
+    function updateImageSettings(saveHistory = true) {
         state.image.opacity = parseInt(getEl('imageOpacity').value) / 100;
         state.image.offsetX = parseInt(getEl('imageOffsetX').value);
         state.image.offsetY = parseInt(getEl('imageOffsetY').value);
         state.image.scale = parseInt(getEl('imageScale').value) / 100;
-        getEl('imageOpacity-value').textContent = Math.round(state.image.opacity * 100);
-        getEl('imageOffsetX-value').textContent = state.image.offsetX;
-        getEl('imageOffsetY-value').textContent = state.image.offsetY;
-        getEl('imageScale-value').textContent = Math.round(state.image.scale * 100);
+        state.settings.imageClip = getEl('imageClip').value; // Also update this from here
+        updateValueDisplays();
         draw();
+        if(saveHistory) saveStateToHistory();
     }
     
+    function updateTextSettings(saveHistory = true) {
+        state.text.value = getEl('textValue').value;
+        state.text.fontFamily = getEl('textFontFamily').value;
+        state.text.fontSize = parseInt(getEl('textFontSize').value);
+        state.text.color = getEl('textColor').value;
+        state.text.isBold = getEl('textFontBold').checked;
+        state.text.isItalic = getEl('textFontItalic').checked;
+        state.text.hasShadow = getEl('textHasShadow').checked;
+        updateValueDisplays();
+        draw();
+        if(saveHistory) saveStateToHistory();
+    }
+
     // --- モーダル制御 ---
+    function closeModal() {
+        modalContainer.innerHTML = '';
+    }
+
     function showConfirmDialog(message, onConfirm) {
-        const modalContainer = getEl('modal-container');
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.innerHTML = `
@@ -1215,16 +1354,59 @@ window.onload = () => {
         
         modal.querySelector('#confirmYes').addEventListener('click', () => {
             onConfirm();
-            modalContainer.innerHTML = '';
+            closeModal();
         });
-        modal.querySelector('#confirmNo').addEventListener('click', () => modalContainer.innerHTML = '');
-        modal.addEventListener('click', (e) => { if(e.target === modal) modalContainer.innerHTML = ''; });
+        modal.querySelector('#confirmNo').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
         
         modalContainer.appendChild(modal);
     }
 
+    function showMessageModal(message) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content w-full max-w-sm">
+                <h3 class="text-lg font-medium">${t('infoTitle')}</h3>
+                <p class="mt-2 text-sm text-gray-600">${message}</p>
+                <div class="mt-4 flex justify-end">
+                    <button id="confirmOK" class="px-4 py-2 bg-indigo-600 text-white rounded-md">${t('btnOK')}</button>
+                </div>
+            </div>`;
+        
+        modal.querySelector('#confirmOK').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+        
+        modalContainer.appendChild(modal);
+    }
+
+    function showPromptModal(message, defaultValue, onConfirm) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content w-full max-w-sm">
+                <h3 class="text-lg font-medium">${message}</h3>
+                <input type="text" id="promptInput" value="${defaultValue}" class="mt-2 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button id="promptCancel" class="px-4 py-2 bg-gray-200 rounded-md">${t('btnCancel')}</button>
+                    <button id="promptOK" class="px-4 py-2 bg-indigo-600 text-white rounded-md">${t('btnOK')}</button>
+                </div>
+            </div>`;
+        
+        const input = modal.querySelector('#promptInput');
+        modal.querySelector('#promptOK').addEventListener('click', () => {
+            onConfirm(input.value);
+            closeModal();
+        });
+        modal.querySelector('#promptCancel').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+        
+        modalContainer.appendChild(modal);
+        input.focus();
+        input.select();
+    }
+
     function showExportModal() {
-        const modalContainer = getEl('modal-container');
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.innerHTML = `
@@ -1254,8 +1436,8 @@ window.onload = () => {
                 </div>
             </div>`;
         
-        modal.querySelector('.close-modal-btn').addEventListener('click', () => modalContainer.innerHTML = '');
-        modal.addEventListener('click', (e) => { if (e.target === modal) modalContainer.innerHTML = ''; });
+        modal.querySelector('.close-modal-btn').addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         modal.querySelector('#exportSize').addEventListener('input', (e) => { modal.querySelector('#exportSize-value').textContent = e.target.value; });
         modal.querySelector('#download-image-btn').addEventListener('click', exportImage);
         
@@ -1263,13 +1445,18 @@ window.onload = () => {
     }
 
     // --- ファイル操作 ---
-    function saveChartData() {
+    function showSaveModal() {
         const defaultName = state.image.name ? `${state.image.name}-Chart` : t('savePlaceholder');
-        const fileName = prompt(t('labelFileName'), defaultName);
-        if(!fileName) return;
+        showPromptModal(t('labelFileName'), defaultName, (fileName) => {
+            if (fileName) {
+                saveChartData(sanitizeFileName(fileName));
+            }
+        });
+    }
 
+    function saveChartData(fileName) {
         const dataToSave = {
-            version: '5.0',
+            version: '5.3',
             settings: state.settings, chartData: state.chartData,
             image: { dataUrl: state.image.element ? state.image.element.src : null, name: state.image.name, opacity: state.image.opacity, offsetX: state.image.offsetX, offsetY: state.image.offsetY, scale: state.image.scale },
             text: state.text, editMode: state.editMode,
@@ -1291,57 +1478,113 @@ window.onload = () => {
         reader.onload = (event) => {
             try {
                 const loadedData = JSON.parse(event.target.result);
-                const defaultSettings = getDefaultSettings();
-                state.settings = { ...defaultSettings, ...loadedData.settings };
-                state.chartData = loadedData.chartData;
-                state.text = { ...getDefaultTextSettings(), ...loadedData.text };
-                state.editMode = loadedData.editMode || 'image';
-                
-                loadSettings();
-                updateLanguage();
-                updateAndSaveSettings();
-                
-                if (loadedData.image && loadedData.image.dataUrl) {
-                    const img = new Image();
-                    img.onload = () => {
-                        state.image = { ...state.image, ...loadedData.image, element: img, scale: loadedData.image.scale || 1.0 };
-                        draw();
-                    };
-                    img.src = loadedData.image.dataUrl;
-                } else {
-                    state.image = { element: null, name: '', opacity: 1.0, offsetX: 0, offsetY: 0, scale: 1.0 };
-                    draw();
-                }
+                // 検証関数を呼び出す
+                validateAndApplyLoadedData(loadedData);
             } catch (error) {
                 console.error("File loading failed:", error);
-                alert(t('invalidFile'));
+                showMessageModal(t('invalidFile'));
             }
         };
         reader.readAsText(file);
         getEl('load-input').value = '';
     }
 
+    function validateAndApplyLoadedData(data) {
+        // 1. バージョンチェック (将来の拡張用)
+        if (data.version !== '5.3') {
+            console.warn(`Mismatched version. Expected '5.3', got '${data.version}'.`);
+        }
+
+        // 2. データの存在と型を検証し、安全に適用する
+        isApplyingState = true; // 履歴保存を一時的に無効化
+
+        const defaultSettings = getDefaultSettings();
+        const defaultText = getDefaultTextSettings();
+
+        // Settings
+        if (data.settings && typeof data.settings === 'object') {
+            state.settings = { ...defaultSettings, ...data.settings };
+            // 数値の範囲チェック（例）
+            state.settings.sides = Math.max(4, Math.min(7, parseInt(state.settings.sides, 10) || 5));
+            state.settings.maxValue = Math.max(4, Math.min(10, parseInt(state.settings.maxValue, 10) || 5));
+        } else {
+            state.settings = defaultSettings;
+        }
+
+        // ChartData
+        if (data.chartData && typeof data.chartData === 'object' && Array.isArray(data.chartData.labels) && Array.isArray(data.chartData.values)) {
+            state.chartData = data.chartData;
+        } else {
+            // デフォルト値にリセット
+            state.chartData = { labels: [], values: [] };
+            updateChartData(state.settings.sides); 
+        }
+
+        // Text
+        if (data.text && typeof data.text === 'object') {
+            state.text = { ...defaultText, ...data.text };
+        } else {
+            state.text = defaultText;
+        }
+
+        // EditMode
+        state.editMode = (data.editMode === 'text' || data.editMode === 'image') ? data.editMode : 'image';
+
+        // 3. 画像データの検証と読み込み
+        state.image = { element: null, name: '', opacity: 1.0, offsetX: 0, offsetY: 0, scale: 1.0 }; // いったんリセット
+        if (data.image && typeof data.image === 'object' && data.image.dataUrl) {
+            // ★重要: data:image/ で始まるData URLのみを許可する
+            if (String(data.image.dataUrl).startsWith('data:image/')) {
+                const img = new Image();
+                img.onload = () => {
+                    state.image = { ...state.image, ...data.image, element: img, scale: data.image.scale || 1.0 };
+                    draw();
+                    saveStateToHistory(); // 最終的な状態を履歴に保存
+                };
+                img.src = data.image.dataUrl;
+            } else {
+                console.warn("Skipping image load: dataUrl is not a valid Data URL.");
+                draw();
+                saveStateToHistory();
+            }
+        } else {
+            draw();
+            saveStateToHistory();
+        }
+        
+        // 4. UIを更新
+        updateLanguage();
+        updateSettingsUI();
+        updateEditViewUI();
+        resizeCanvas();
+
+        isApplyingState = false; // 履歴保存を再度有効化
+    }
+
     function exportImage() {
         const fileNameInput = getEl('exportFileName');
         let fileName = fileNameInput.value.trim() || fileNameInput.placeholder;
+        fileName = sanitizeFileName(fileName);
         const format = getEl('exportFormat').value;
         const size = parseInt(getEl('exportSize').value);
         
         const tempCanvas = document.createElement('canvas');
         
-        if (state.settings.aspectRatio === 'landscape') {
-            tempCanvas.width = size * 1.2;
-            tempCanvas.height = size;
-        } else {
-            tempCanvas.width = size;
-            tempCanvas.height = size;
-        }
+        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
+        // 常に正方形で出力
+        tempCanvas.width = size;
+        tempCanvas.height = size;
+        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
         
         const tempCtx = tempCanvas.getContext('2d');
         const geometry = calculateGeometry(tempCanvas.width, tempCanvas.height);
+        
+        const exportOptions = {
+            forceOpaqueBackground: format === 'jpeg'
+        };
 
-        // Draw everything on the temporary canvas
-        drawOnContext(tempCtx, tempCanvas.width, tempCanvas.height, geometry);
+        // Draw everything on the temporary canvas, including the background
+        drawOnContext(tempCtx, tempCanvas.width, tempCanvas.height, geometry, exportOptions);
 
         const imageType = `image/${format}`;
         const dataUrl = tempCanvas.toDataURL(imageType, format === 'jpeg' ? 0.9 : 1.0);
@@ -1350,7 +1593,7 @@ window.onload = () => {
         a.download = `${fileName}.${format}`;
         a.click();
         
-        getEl('modal-container').innerHTML = '';
+        closeModal();
     }
     
     // --- ヘルパー関数 ---
@@ -1359,6 +1602,71 @@ window.onload = () => {
         if (hex.length == 4) { r = "0x" + hex[1] + hex[1]; g = "0x" + hex[2] + hex[2]; b = "0x" + hex[3] + hex[3]; }
         else if (hex.length == 7) { r = "0x" + hex[1] + hex[2]; g = "0x" + hex[3] + hex[4]; b = "0x" + hex[5] + hex[6]; }
         return `rgba(${+r},${+g},${+b},${alpha})`;
+    }
+
+    function sanitizeFileName(fileName) {
+        // ファイル名として使えない文字をハイフンに置き換える
+        return fileName.replace(/[\/\\?%*:|"<>]/g, '-');
+    }
+
+    // --- Undo/Redo ---
+    function saveStateToHistory() {
+        if (isApplyingState) return;
+        
+        history = history.slice(0, historyIndex + 1);
+        
+        const newState = JSON.parse(JSON.stringify(state, (key, value) => {
+            if (key === 'element') return null; // Don't stringify the image element
+            return value;
+        }));
+        if(state.image.element) {
+            newState.image.dataUrl = state.image.element.src;
+        }
+
+        history.push(newState);
+        historyIndex = history.length - 1;
+    }
+
+    function applyState(stateToApply) {
+        isApplyingState = true;
+        
+        const imageElement = state.image.element;
+        state = JSON.parse(JSON.stringify(stateToApply));
+        
+        if (stateToApply.image.dataUrl) {
+            if (!imageElement || imageElement.src !== stateToApply.image.dataUrl) {
+                const img = new Image();
+                img.onload = () => {
+                    state.image.element = img;
+                    draw();
+                };
+                img.src = stateToApply.image.dataUrl;
+            } else {
+                 state.image.element = imageElement;
+            }
+        } else {
+            state.image.element = null;
+        }
+
+        updateSettingsUI();
+        updateEditViewUI();
+        resizeCanvas();
+        
+        isApplyingState = false;
+    }
+
+    function undo() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            applyState(history[historyIndex]);
+        }
+    }
+
+    function redo() {
+        if (historyIndex < history.length - 1) {
+            historyIndex++;
+            applyState(history[historyIndex]);
+        }
     }
 
     init();
