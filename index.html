@@ -155,7 +155,6 @@
                         <i class="fas fa-chevron-down transition-transform"></i>
                     </button>
                     <div id="field-settings-content" class="accordion-content mt-4 space-y-6 pl-4 border-l-2 border-gray-200">
-                        <!-- ▼▼▼▼▼ ここから修正 ▼▼▼▼▼ -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700" data-lang="labelGraphSize">グラフサイズ</label>
                             <div class="mt-2 flex space-x-4">
@@ -173,7 +172,6 @@
                                 </label>
                             </div>
                         </div>
-                        <!-- ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲ -->
                         <div class="grid grid-cols-2 gap-4 items-center">
                              <div>
                                 <label for="backgroundColorOpacity" class="block text-sm font-medium text-gray-700"><span data-lang="labelBackgroundColorOpacity">背景の透過度</span>: <span id="backgroundColorOpacity-value">100</span>%</label>
@@ -340,6 +338,8 @@
         <header class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 id="app-title" class="text-xl md:text-2xl font-bold text-gray-800" data-lang="appTitle">画像放り込みレーダーチャートメーカー</h1>
             <div class="flex items-center gap-2 flex-wrap">
+                <!-- ▼▼▼▼▼ ここから修正 ▼▼▼▼▼ -->
+                <button id="fullscreen-btn" title="全画面表示" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-expand"></i></button>
                 <button id="export-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-image mr-2"></i><span data-lang="export">画像出力</span></button>
                 <button id="help-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-question-circle mr-2"></i><span data-lang="help">操作方法</span></button>
                 
@@ -352,6 +352,7 @@
                 <div class="border-l border-gray-300 h-6 mx-2"></div>
 
                 <button id="language-toggle-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"></button>
+                <!-- ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲ -->
             </div>
         </header>
         <div id="canvas-container">
@@ -379,7 +380,6 @@ window.onload = () => {
     const modalContainer = getEl('modal-container');
 
     // --- 翻訳データ ---
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     const translations = {
         ja: {
             appTitle: "画像放り込みレーダーチャートメーカー",
@@ -440,6 +440,8 @@ window.onload = () => {
             textFontBold: "太字",
             textFontItalic: "斜体",
             textHasShadow: "影",
+            fullscreenEnter: "全画面表示",
+            fullscreenExit: "全画面解除",
         },
         en: {
             appTitle: "Image Drop Radar Chart Maker",
@@ -500,9 +502,10 @@ window.onload = () => {
             textFontBold: "Bold",
             textFontItalic: "Italic",
             textHasShadow: "Shadow",
+            fullscreenEnter: "Fullscreen",
+            fullscreenExit: "Exit Fullscreen",
         }
     };
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     function getHelpContent(lang) {
         return lang === 'ja' ? `
@@ -520,6 +523,7 @@ window.onload = () => {
             <h3 class="font-semibold mt-4 mb-2">設定のカスタマイズ</h3>
             <ul class="list-disc list-inside space-y-1">
                 <li><strong>各種設定:</strong> 左側の設定パネルで、チャートの形、色、線の太さなどを変更できます。設定は自動で保存されます。</li>
+                <li><strong>全画面表示:</strong> ヘッダーのボタンから全画面表示の切り替えができます。OBSのウィンドウキャプチャで利用する際は、この機能でブラウザのUI（URLバーなど）を非表示にすることをおすすめします。</li>
             </ul>
         ` : `
             <h3 class="font-semibold mb-2">Image Settings</h3>
@@ -536,6 +540,7 @@ window.onload = () => {
             <h3 class="font-semibold mt-4 mb-2">Customization</h3>
             <ul class="list-disc list-inside space-y-1">
                 <li><strong>Various Settings:</strong> Change the chart's shape, colors, line widths, etc., in the 'Settings' panel. Settings are saved automatically.</li>
+                <li><strong>Fullscreen Mode:</strong> You can toggle fullscreen mode from the button in the header. When using with window capture in OBS, we recommend using this feature to hide the browser UI (URL bar, etc.).</li>
             </ul>
         `;
     }
@@ -559,7 +564,6 @@ window.onload = () => {
         };
     }
 
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function getDefaultSettings() {
         return {
             language: 'ja',
@@ -579,7 +583,6 @@ window.onload = () => {
             imageClip: 'full',
         };
     }
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     function resetState() {
         state = {
@@ -646,14 +649,17 @@ window.onload = () => {
             const key = el.dataset.lang;
             if (translations[lang] && translations[lang][key]) {
                 const icon = el.querySelector('i');
-                if (icon) {
-                    el.innerHTML = `<i class="${icon.className}"></i> ${translations[lang][key]}`;
-                } else {
-                    el.innerHTML = translations[lang][key];
+                const span = el.querySelector('span');
+                 if (icon && span) {
+                    span.textContent = ` ${translations[lang][key]}`;
+                } else if (!icon) { // Language toggle button has no icon
+                    el.textContent = translations[lang][key];
                 }
             }
         });
+        
         getEl('language-toggle-btn').textContent = lang === 'ja' ? t('lang_toggle_en') : t('lang_toggle_ja');
+
         const sidesUnitEl = document.querySelector('span[data-lang="sidesUnit"]');
         if (sidesUnitEl) {
             sidesUnitEl.textContent = lang === 'ja' ? `角形` : '';
@@ -661,10 +667,11 @@ window.onload = () => {
         if (!settingsView.classList.contains('hidden')) showPanelView('settings');
         else if (!helpView.classList.contains('hidden')) showPanelView('help');
         else if (!editView.classList.contains('hidden')) showPanelView('edit');
+
+        updateFullscreenButton();
     }
 
     // --- キャンバスのリサイズ ---
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function resizeCanvas() {
         const rect = canvasContainer.getBoundingClientRect();
         const size = Math.min(rect.width, rect.height);
@@ -672,14 +679,11 @@ window.onload = () => {
         canvas.height = size;
         draw();
     }
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
     window.addEventListener('resize', resizeCanvas);
 
     // --- 設定の更新と保存 ---
     function updateAllSettings(saveHistory = true) {
-        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
         state.settings.graphSize = document.querySelector('input[name="graphSize"]:checked').value;
-        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
         state.settings.backgroundColor = getEl('backgroundColor').value;
         state.settings.backgroundColorOpacity = parseInt(getEl('backgroundColorOpacity').value) / 100;
         state.settings.sides = parseInt(getEl('sides').value);
@@ -748,14 +752,12 @@ window.onload = () => {
     }
 
     function updateSettingsUI() {
-        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
         // 古い設定（aspectRatio）からの移行
         if (state.settings.aspectRatio) {
             state.settings.graphSize = 'large';
             delete state.settings.aspectRatio;
         }
         document.querySelector(`input[name="graphSize"][value="${state.settings.graphSize}"]`).checked = true;
-        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
         Object.keys(state.settings).forEach(key => {
             const el = getEl(key);
             if(el && key !== 'graphSize') { // graphSizeは上で処理済み
@@ -817,7 +819,6 @@ window.onload = () => {
         targetCtx.fillRect(0, 0, width, height);
     }
 
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function calculateGeometry(width, height) {
         const cx = width / 2;
         const cy = height / 2;
@@ -847,7 +848,6 @@ window.onload = () => {
             maxTextWidth: r * 1.8,
         };
     }
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
     
     function drawImage(targetCtx, cx, cy, r) {
         targetCtx.save();
@@ -1008,6 +1008,7 @@ window.onload = () => {
     // --- イベントリスナー設定 ---
     function setupEventListeners() {
         // Header buttons
+        getEl('fullscreen-btn').addEventListener('click', toggleFullscreen);
         helpBtn.addEventListener('click', () => showPanelView('help'));
         getEl('save-btn').addEventListener('click', showSaveModal);
         getEl('load-btn').addEventListener('click', () => getEl('load-input').click());
@@ -1125,6 +1126,8 @@ window.onload = () => {
                 redo();
             }
         });
+        
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
     }
     
     function toggleAccordion(contentId, forceOpen = null) {
@@ -1570,11 +1573,9 @@ window.onload = () => {
         
         const tempCanvas = document.createElement('canvas');
         
-        // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
         // 常に正方形で出力
         tempCanvas.width = size;
         tempCanvas.height = size;
-        // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
         
         const tempCtx = tempCanvas.getContext('2d');
         const geometry = calculateGeometry(tempCanvas.width, tempCanvas.height);
@@ -1668,6 +1669,36 @@ window.onload = () => {
             applyState(history[historyIndex]);
         }
     }
+    
+    // --- Fullscreen ---
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
+    function updateFullscreenButton() {
+        const btn = getEl('fullscreen-btn');
+        if(!btn) return;
+        const icon = btn.querySelector('i');
+        if (document.fullscreenElement) {
+            icon.classList.remove('fa-expand');
+            icon.classList.add('fa-compress');
+            btn.title = t('fullscreenExit');
+        } else {
+            icon.classList.remove('fa-compress');
+            icon.classList.add('fa-expand');
+            btn.title = t('fullscreenEnter');
+        }
+    }
+    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     init();
 };
@@ -1675,3 +1706,4 @@ window.onload = () => {
 
 </body>
 </html>
+
