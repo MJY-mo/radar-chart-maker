@@ -40,8 +40,7 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow-y: auto;
+            overflow-y: hidden;
         }
         #canvas-container {
             flex-grow: 1;
@@ -52,15 +51,16 @@
             position: relative;
             border: 3px dashed transparent;
             transition: border-color 0.3s, background-color 0.3s;
-            padding: 1.5rem; /* コンテナ内の余白を追加 */
+            padding: 1.5rem;
             margin: auto;
             width: 100%;
             max-width: 810px;
             max-height: 810px;
+            min-height: 0;
         }
         #canvas-container.drag-over {
             border-color: #4f46e5;
-            background-color: #eef2ff !important; /* Ensure override */
+            background-color: #eef2ff !important;
         }
         .modal-overlay {
             position: fixed;
@@ -102,17 +102,17 @@
             color: #4F46E5;
         }
         .menu-btn {
-            background-color: #6b7280; /* gray-500 */
+            background-color: #6b7280;
             color: white;
         }
         .menu-btn:hover {
-            background-color: #4b5563; /* gray-600 */
+            background-color: #4b5563;
         }
         .menu-btn.active-help {
-            background-color: #10b981; /* green-500 */
+            background-color: #10b981;
         }
         .menu-btn.active-help:hover {
-            background-color: #059669; /* green-600 */
+            background-color: #059669;
         }
         .checkbox-label {
             display: flex;
@@ -127,7 +127,7 @@
             opacity: 0;
         }
         .accordion-content.open {
-            max-height: 2000px; /* 十分な高さを確保 */
+            max-height: 2000px;
             visibility: visible;
             opacity: 1;
         }
@@ -182,10 +182,6 @@
                                 <input type="color" id="backgroundColor" value="#FFFFFF" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
-                        <div>
-                            <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang="labelMaxValue">ステータスの最大値</span>: <span id="maxValue-value">5</span></label>
-                            <input type="range" id="maxValue" min="4" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
                         <div class="grid grid-cols-2 gap-4 items-center">
                             <div>
                                 <label for="gridLineWidth" class="block text-sm font-medium text-gray-700"><span data-lang="labelGridLineWidth">枠線の太さ</span>: <span id="gridLineWidth-value">1</span>px</label>
@@ -227,11 +223,17 @@
                                 <input type="color" id="fillColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
-                        <div>
+                        <div class="space-y-2">
                            <label class="checkbox-label">
                                <input type="checkbox" id="showValues" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                <span class="ml-2 text-sm font-medium text-gray-700" data-lang="labelShowValues">数値を表示</span>
                            </label>
+                           <div id="value-font-size-container" class="hidden pl-6">
+                                <label for="valueFontSize" class="block text-sm font-medium text-gray-700">
+                                   <span data-lang="labelValueFontSize">数値の文字サイズ</span>: <span id="valueFontSize-value">18</span>px
+                               </label>
+                               <input type="range" id="valueFontSize" min="1" max="60" value="18" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                           </div>
                         </div>
                          <button id="reset-chart-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetChartSettings">チャート設定をリセット</span></button>
                     </div>
@@ -247,6 +249,10 @@
                         <div>
                             <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang="labelSides">ステータス項目の数</span>: <span id="sides-value">5</span><span data-lang="sidesUnit"></span></label>
                             <input type="range" id="sides" min="4" max="7" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang="labelMaxValue">ステータスの最大値</span>: <span id="maxValue-value">5</span></label>
+                            <input type="range" id="maxValue" min="4" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div id="status-labels-container" class="space-y-4">
                            <!-- ラベル設定が動的にここに挿入されます -->
@@ -411,6 +417,7 @@ window.onload = () => {
             labelGridLineColor: "枠線の色",
             labelLabelText: "項目",
             labelLabelFontSize: "文字サイズ",
+            labelValueFontSize: "数値の文字サイズ",
             labelShowValues: "数値を表示",
             btnResetFieldSettings: "フィールド設定をリセット",
             btnResetChartSettings: "チャート設定をリセット",
@@ -475,6 +482,7 @@ window.onload = () => {
             labelGridLineColor: "Grid Line Color",
             labelLabelText: "Item",
             labelLabelFontSize: "Font Size",
+            labelValueFontSize: "Value Font Size",
             labelShowValues: "Show Values",
             btnResetFieldSettings: "Reset Field Settings",
             btnResetChartSettings: "Reset Chart Settings",
@@ -590,6 +598,7 @@ window.onload = () => {
             fillColor: '#000000',
             fillOpacity: 0.3, 
             showValues: false,
+            valueFontSize: 18,
             imageClip: 'full',
         };
     }
@@ -724,6 +733,7 @@ window.onload = () => {
         state.settings.fillColor = getEl('fillColor').value;
         state.settings.fillOpacity = parseInt(getEl('fillOpacity').value) / 100;
         state.settings.showValues = getEl('showValues').checked;
+        state.settings.valueFontSize = parseInt(getEl('valueFontSize').value);
         state.settings.imageClip = getEl('imageClip').value;
         
         updateValueDisplays();
@@ -752,6 +762,7 @@ window.onload = () => {
         getEl('chartLineWidth-value').textContent = getEl('chartLineWidth').value;
         getEl('gridLineWidth-value').textContent = getEl('gridLineWidth').value;
         getEl('fillOpacity-value').textContent = getEl('fillOpacity').value;
+        getEl('valueFontSize-value').textContent = getEl('valueFontSize').value;
         getEl('imageScale-value').textContent = getEl('imageScale').value;
         getEl('imageOpacity-value').textContent = getEl('imageOpacity').value;
         getEl('textFontSize-value').textContent = getEl('textFontSize').value;
@@ -798,6 +809,7 @@ window.onload = () => {
                 }
             }
         });
+        getEl('value-font-size-container').classList.toggle('hidden', !state.settings.showValues);
         updateValueDisplays();
     }
     
@@ -822,7 +834,6 @@ window.onload = () => {
     }
     
     function drawOnContext(targetCtx, width, height, geometry) {
-        // Clear canvas before drawing chart content
         targetCtx.clearRect(0, 0, width, height);
 
         const { cx, cy, r, textCenterX, textCenterY, maxTextWidth } = geometry;
@@ -837,6 +848,7 @@ window.onload = () => {
         drawChart(targetCtx, cx, cy, r);
         drawLabels(targetCtx, cx, cy, r);
         drawPoints(targetCtx, cx, cy, r);
+        drawValues(targetCtx, cx, cy, r);
     }
 
     // --- 描画処理 ---
@@ -1001,22 +1013,28 @@ window.onload = () => {
     }
 
     function drawLabels(targetCtx, cx, cy, r) {
-        targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
-        
-        const labelRadius = r * 1.15;
+        const labelRadius = r * 1.08;
+        const labelPadding = 0;
+
         for (let i = 0; i < state.settings.sides; i++) {
             targetCtx.save();
 
             const label = state.chartData.labels[i];
-            const value = state.chartData.values[i];
             const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
-            
+            const cosAngle = Math.cos(angle);
+
             let x = cx + labelRadius * Math.cos(angle);
             let y = cy + labelRadius * Math.sin(angle);
 
-            if (i === 0) { // Top label
-                y -= label.fontSize * 0.5;
+            if (Math.abs(cosAngle) < 0.1) {
+                targetCtx.textAlign = 'center';
+            } else if (cosAngle > 0) {
+                targetCtx.textAlign = 'left';
+                x += labelPadding;
+            } else {
+                targetCtx.textAlign = 'right';
+                x -= labelPadding;
             }
 
             const fontStyle = label.isItalic ? 'italic' : 'normal';
@@ -1034,13 +1052,6 @@ window.onload = () => {
             
             targetCtx.fillText(label.text, x, y);
             
-            targetCtx.shadowColor = 'transparent';
-
-            if (state.settings.showValues) {
-                targetCtx.font = `${label.fontSize * 0.8}px sans-serif`;
-                targetCtx.fillText(`(${value})`, x, y + label.fontSize * 1.1);
-            }
-
             targetCtx.restore();
         }
     }
@@ -1056,6 +1067,41 @@ window.onload = () => {
             targetCtx.arc(x, y, 5, 0, 2 * Math.PI);
             targetCtx.fillStyle = state.settings.chartLineColor;
             targetCtx.fill();
+        }
+    }
+
+    function drawValues(targetCtx, cx, cy, r) {
+        if (!state.settings.showValues) return;
+
+        targetCtx.textAlign = 'center';
+        targetCtx.textBaseline = 'middle';
+
+        for (let i = 0; i < state.settings.sides; i++) {
+            const value = state.chartData.values[i];
+            const currentRadius = (r / state.settings.maxValue) * value;
+            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
+            
+            const textOffset = 15;
+            const textRadius = currentRadius + textOffset;
+            
+            const textX = cx + textRadius * Math.cos(angle);
+            const textY = cy + textRadius * Math.sin(angle);
+
+            const label = state.chartData.labels[i];
+            const fontSize = state.settings.valueFontSize;
+            const fontWeight = 'bold';
+            targetCtx.font = `${fontWeight} ${fontSize}px sans-serif`;
+            targetCtx.fillStyle = label.color;
+            
+            targetCtx.save();
+            if (label.hasShadow) {
+                targetCtx.shadowColor = 'rgba(0,0,0,0.5)';
+                targetCtx.shadowBlur = 2;
+                targetCtx.shadowOffsetX = 1;
+                targetCtx.shadowOffsetY = 1;
+            }
+            targetCtx.fillText(value, textX, textY);
+            targetCtx.restore();
         }
     }
     
@@ -1105,6 +1151,10 @@ window.onload = () => {
             });
         });
         
+        getEl('showValues').addEventListener('change', (e) => {
+            getEl('value-font-size-container').classList.toggle('hidden', !e.target.checked);
+        });
+
         const allChangeInputs = document.querySelectorAll('#settings-view input[type="color"], #settings-view input[type="radio"], #settings-view input[type="checkbox"], #edit-view select, #edit-view input[type="color"], #edit-view input[type="checkbox"], #edit-view textarea');
         allChangeInputs.forEach(input => {
             const eventType = (input.type === 'checkbox' || input.type === 'radio' || input.tagName === 'SELECT') ? 'change' : 'input';
@@ -1128,7 +1178,7 @@ window.onload = () => {
         getEl('reset-field-settings-btn').addEventListener('click', () => {
             showConfirmDialog(t('confirmReset'), () => {
                 const defaults = getDefaultSettings();
-                const fieldKeys = ['graphSize', 'backgroundColor', 'backgroundColorOpacity', 'maxValue', 'gridLineWidth', 'gridLineColor'];
+                const fieldKeys = ['graphSize', 'backgroundColor', 'backgroundColorOpacity', 'gridLineWidth', 'gridLineColor'];
                 fieldKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
                 updateAllSettings();
@@ -1137,7 +1187,7 @@ window.onload = () => {
         getEl('reset-chart-settings-btn').addEventListener('click', () => {
              showConfirmDialog(t('confirmReset'), () => {
                 const defaults = getDefaultSettings();
-                const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity', 'showValues'];
+                const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity', 'showValues', 'valueFontSize'];
                 chartKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
                 updateAllSettings();
@@ -1544,7 +1594,7 @@ window.onload = () => {
 
     function saveChartData(fileName) {
         const dataToSave = {
-            version: '5.6',
+            version: '5.7',
             settings: state.settings, chartData: state.chartData,
             image: { dataUrl: state.image.element ? state.image.element.src : null, name: state.image.name, opacity: state.image.opacity, offsetX: state.image.offsetX, offsetY: state.image.offsetY, scale: state.image.scale },
             text: state.text, editMode: state.editMode,
