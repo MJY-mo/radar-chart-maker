@@ -16,6 +16,7 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: #f0f2f5;
             overscroll-behavior: none;
+            overflow: hidden; /* 追加 */
         }
         .app-container {
             display: flex;
@@ -257,6 +258,7 @@
                         <div id="status-labels-container" class="space-y-4">
                            <!-- ラベル設定が動的にここに挿入されます -->
                         </div>
+                        <button id="reset-status-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetStatusSettings">ステータス設定をリセット</span></button>
                     </div>
                 </div>
             </div>
@@ -421,6 +423,7 @@ window.onload = () => {
             labelShowValues: "数値を表示",
             btnResetFieldSettings: "フィールド設定をリセット",
             btnResetChartSettings: "チャート設定をリセット",
+            btnResetStatusSettings: "ステータス設定をリセット",
             btnResetTextSettings: "テキスト設定をリセット",
             exportTitle: "画像として出力",
             labelFileName: "ファイル名",
@@ -444,6 +447,7 @@ window.onload = () => {
             btnNo: "いいえ", btnYes: "はい", btnOK: "OK", btnCancel: "キャンセル",
             confirmMessage: "画像を置き換えますか？",
             confirmReset: "このセクションの設定を初期値に戻します。よろしいですか？",
+            confirmResetStatus: "すべてのステータス項目のスタイルを初期値に戻します。よろしいですか？（テキストは維持されます）",
             invalidFile: "無効なファイル形式です。正しいJSONファイルを指定してください。",
             savePlaceholder: "チャートデータ",
             exportPlaceholder: "レーダーチャート",
@@ -486,6 +490,7 @@ window.onload = () => {
             labelShowValues: "Show Values",
             btnResetFieldSettings: "Reset Field Settings",
             btnResetChartSettings: "Reset Chart Settings",
+            btnResetStatusSettings: "Reset Status Settings",
             btnResetTextSettings: "Reset Text Settings",
             exportTitle: "Export as Image",
             labelFileName: "File Name",
@@ -509,6 +514,7 @@ window.onload = () => {
             btnNo: "No", btnYes: "Yes", btnOK: "OK", btnCancel: "Cancel",
             confirmMessage: "Do you want to replace the image?",
             confirmReset: "Are you sure you want to reset the settings in this section?",
+            confirmResetStatus: "Are you sure you want to reset all status item styles to their default values? (The text for each item will be preserved.)",
             invalidFile: "Invalid file format. Please specify a correct JSON file.",
             savePlaceholder: "ChartData",
             exportPlaceholder: "RadarChart",
@@ -1014,8 +1020,8 @@ window.onload = () => {
 
     function drawLabels(targetCtx, cx, cy, r) {
         targetCtx.textBaseline = 'middle';
-        const labelRadius = r * 1.08;
-        const labelPadding = 0;
+        const labelRadius = r * 1.08; 
+        const labelPadding = 2; 
 
         for (let i = 0; i < state.settings.sides; i++) {
             targetCtx.save();
@@ -1191,6 +1197,21 @@ window.onload = () => {
                 chartKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
                 updateAllSettings();
+            });
+        });
+        getEl('reset-status-settings-btn').addEventListener('click', () => {
+            showConfirmDialog(t('confirmResetStatus'), () => {
+                state.chartData.labels.forEach(label => {
+                    const defaultStyles = getDefaultLabel();
+                    label.fontSize = defaultStyles.fontSize;
+                    label.color = defaultStyles.color;
+                    label.isBold = defaultStyles.isBold;
+                    label.isItalic = defaultStyles.isItalic;
+                    label.hasShadow = defaultStyles.hasShadow;
+                });
+                updateStatusLabelsUI();
+                draw();
+                saveStateToHistory();
             });
         });
         getEl('reset-text-settings-btn').addEventListener('click', () => {
