@@ -45,7 +45,6 @@
         }
         #canvas-container {
             flex-grow: 1;
-            background-color: white;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             display: flex;
             justify-content: center;
@@ -61,7 +60,7 @@
         }
         #canvas-container.drag-over {
             border-color: #4f46e5;
-            background-color: #eef2ff;
+            background-color: #eef2ff !important; /* Ensure override */
         }
         .modal-overlay {
             position: fixed;
@@ -85,6 +84,7 @@
         }
         canvas {
             cursor: crosshair;
+            background-color: transparent;
         }
         .label-input {
             position: absolute;
@@ -127,7 +127,7 @@
             opacity: 0;
         }
         .accordion-content.open {
-            max-height: 1000px; /* 十分な高さを確保 */
+            max-height: 2000px; /* 十分な高さを確保 */
             visibility: visible;
             opacity: 1;
         }
@@ -183,10 +183,6 @@
                             </div>
                         </div>
                         <div>
-                            <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang="labelSides">ステータス項目の数</span>: <span id="sides-value">5</span><span data-lang="sidesUnit"></span></label>
-                            <input type="range" id="sides" min="4" max="7" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-                        <div>
                             <label for="maxValue" class="block text-sm font-medium text-gray-700"><span data-lang="labelMaxValue">ステータスの最大値</span>: <span id="maxValue-value">5</span></label>
                             <input type="range" id="maxValue" min="4" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
@@ -198,16 +194,6 @@
                             <div>
                                 <label for="gridLineColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelGridLineColor">枠線の色</label>
                                 <input type="color" id="gridLineColor" value="#CCCCCC" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 items-center">
-                            <div>
-                                <label for="labelFontSize" class="block text-sm font-medium text-gray-700"><span data-lang="labelLabelFontSize">項目文字サイズ</span>: <span id="labelFontSize-value">20</span>px</label>
-                                <input type="range" id="labelFontSize" min="1" max="60" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                            </div>
-                             <div>
-                                <label for="labelColor" class="block text-sm font-medium text-gray-700 sr-only" data-lang="labelColor">項目文字の色</label>
-                                <input type="color" id="labelColor" value="#333333" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
                         <button id="reset-field-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetFieldSettings">フィールド設定をリセット</span></button>
@@ -241,7 +227,30 @@
                                 <input type="color" id="fillColor" value="#000000" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
                             </div>
                         </div>
+                        <div>
+                           <label class="checkbox-label">
+                               <input type="checkbox" id="showValues" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                               <span class="ml-2 text-sm font-medium text-gray-700" data-lang="labelShowValues">数値を表示</span>
+                           </label>
+                        </div>
                          <button id="reset-chart-settings-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"><i class="fas fa-undo mr-2"></i><span data-lang="btnResetChartSettings">チャート設定をリセット</span></button>
+                    </div>
+                </div>
+                
+                <!-- ステータス項目設定 -->
+                <div>
+                    <button data-accordion-toggle="status-settings-content" class="w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                        <span class="font-semibold" data-lang="statusSettingsTitle">ステータス項目設定</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div id="status-settings-content" class="accordion-content mt-4 space-y-4 pl-4 border-l-2 border-gray-200">
+                        <div>
+                            <label for="sides" class="block text-sm font-medium text-gray-700"><span data-lang="labelSides">ステータス項目の数</span>: <span id="sides-value">5</span><span data-lang="sidesUnit"></span></label>
+                            <input type="range" id="sides" min="4" max="7" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div id="status-labels-container" class="space-y-4">
+                           <!-- ラベル設定が動的にここに挿入されます -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -338,7 +347,6 @@
         <header class="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
             <h1 id="app-title" class="text-xl md:text-2xl font-bold text-gray-800" data-lang="appTitle">画像放り込みレーダーチャートメーカー</h1>
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- ▼▼▼▼▼ ここから修正 ▼▼▼▼▼ -->
                 <button id="fullscreen-btn" title="全画面表示" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-expand"></i></button>
                 <button id="export-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-image mr-2"></i><span data-lang="export">画像出力</span></button>
                 <button id="help-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"><i class="fas fa-question-circle mr-2"></i><span data-lang="help">操作方法</span></button>
@@ -352,7 +360,6 @@
                 <div class="border-l border-gray-300 h-6 mx-2"></div>
 
                 <button id="language-toggle-btn" class="menu-btn font-bold py-2 px-4 rounded-lg transition-colors"></button>
-                <!-- ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲ -->
             </div>
         </header>
         <div id="canvas-container">
@@ -385,6 +392,7 @@ window.onload = () => {
             appTitle: "画像放り込みレーダーチャートメーカー",
             settings: "設定", save: "保存", load: "呼び出し", export: "画像出力", help: "操作方法",
             settingsTitle: "設定",
+            statusSettingsTitle: "ステータス項目設定",
             fieldSettingsTitle: "フィールド設定",
             chartSettingsTitle: "チャート設定",
             labelGraphSize: "グラフサイズ",
@@ -393,8 +401,6 @@ window.onload = () => {
             graphSizeSmall: "小",
             labelBackgroundColor: "背景色",
             labelBackgroundColorOpacity: "背景の透過度",
-            labelLabelFontSize: "項目文字サイズ",
-            labelColor: "項目文字の色",
             labelSides: "ステータス項目の数", sidesUnit: "角形",
             labelMaxValue: "ステータスの最大値",
             labelChartLineWidth: "チャート線の太さ",
@@ -403,6 +409,9 @@ window.onload = () => {
             labelFillOpacity: "塗りつぶしの透過度",
             labelGridLineWidth: "枠線の太さ",
             labelGridLineColor: "枠線の色",
+            labelLabelText: "項目",
+            labelLabelFontSize: "文字サイズ",
+            labelShowValues: "数値を表示",
             btnResetFieldSettings: "フィールド設定をリセット",
             btnResetChartSettings: "チャート設定をリセット",
             btnResetTextSettings: "テキスト設定をリセット",
@@ -447,6 +456,7 @@ window.onload = () => {
             appTitle: "Image Drop Radar Chart Maker",
             settings: "Settings", save: "Save", load: "Load", export: "Export", help: "Help",
             settingsTitle: "Settings",
+            statusSettingsTitle: "Status Item Settings",
             fieldSettingsTitle: "Field Settings",
             chartSettingsTitle: "Chart Settings",
             labelGraphSize: "Graph Size",
@@ -455,8 +465,6 @@ window.onload = () => {
             graphSizeSmall: "Small",
             labelBackgroundColor: "Background Color",
             labelBackgroundColorOpacity: "Background Opacity",
-            labelLabelFontSize: "Label Font Size",
-            labelColor: "Label Color",
             labelSides: "Number of Status Items", sidesUnit: "",
             labelMaxValue: "Status Max Value",
             labelChartLineWidth: "Chart Line Width",
@@ -465,6 +473,9 @@ window.onload = () => {
             labelFillOpacity: "Fill Opacity",
             labelGridLineWidth: "Grid Line Width",
             labelGridLineColor: "Grid Line Color",
+            labelLabelText: "Item",
+            labelLabelFontSize: "Font Size",
+            labelShowValues: "Show Values",
             btnResetFieldSettings: "Reset Field Settings",
             btnResetChartSettings: "Reset Chart Settings",
             btnResetTextSettings: "Reset Text Settings",
@@ -517,7 +528,7 @@ window.onload = () => {
             <h3 class="font-semibold mt-4 mb-2">チャートの編集</h3>
             <ul class="list-disc list-inside space-y-1">
                 <li><strong>数値の変更:</strong> チャート上の黒い点をドラッグします。</li>
-                <li><strong>項目名の変更:</strong> "A", "B"などの項目名をダブルクリックします。</li>
+                <li><strong>項目名の変更:</strong> 左パネルの「ステータス項目設定」からテキストやスタイルを編集します。</li>
                 <li><strong>画像/テキストの調整:</strong> チャートエリア内をダブルクリックすると左パネルが編集モードに切り替わります。</li>
             </ul>
             <h3 class="font-semibold mt-4 mb-2">設定のカスタマイズ</h3>
@@ -534,7 +545,7 @@ window.onload = () => {
             <h3 class="font-semibold mt-4 mb-2">Chart Editing</h3>
             <ul class="list-disc list-inside space-y-1">
                 <li><strong>Change Values:</strong> Drag the black dots on the chart.</li>
-                <li><strong>Change Labels:</strong> Double-click on labels like "A", "B".</li>
+                <li><strong>Change Labels:</strong> Edit text and styles from the "Status Item Settings" section in the left panel.</li>
                 <li><strong>Adjust Image/Text:</strong> Double-click inside the chart area to switch the left panel to edit mode.</li>
             </ul>
             <h3 class="font-semibold mt-4 mb-2">Customization</h3>
@@ -563,7 +574,7 @@ window.onload = () => {
             hasShadow: false,
         };
     }
-
+    
     function getDefaultSettings() {
         return {
             language: 'ja',
@@ -574,13 +585,23 @@ window.onload = () => {
             maxValue: 5, 
             gridLineWidth: 1, 
             gridLineColor: '#cccccc', 
-            labelFontSize: 20, 
-            labelColor: '#333333',
             chartLineWidth: 2, 
             chartLineColor: '#000000',
             fillColor: '#000000',
             fillOpacity: 0.3, 
+            showValues: false,
             imageClip: 'full',
+        };
+    }
+    
+    function getDefaultLabel(text = 'A') {
+        return {
+            text: text,
+            fontSize: 20,
+            color: '#333333',
+            isBold: false,
+            isItalic: false,
+            hasShadow: false,
         };
     }
 
@@ -588,7 +609,10 @@ window.onload = () => {
         state = {
             settings: getDefaultSettings(),
             chartData: {
-                labels: ['A', 'B', 'C', 'D', 'E'],
+                labels: [
+                    getDefaultLabel('A'), getDefaultLabel('B'), getDefaultLabel('C'),
+                    getDefaultLabel('D'), getDefaultLabel('E')
+                ],
                 values: [1, 1, 1, 1, 1],
             },
             image: {
@@ -597,7 +621,6 @@ window.onload = () => {
             text: getDefaultTextSettings(),
             editMode: 'image',
             draggingPoint: -1,
-            editingLabel: -1,
         }
     }
 
@@ -608,10 +631,12 @@ window.onload = () => {
         setupEventListeners();
         showPanelView('settings');
         updateLanguage();
+        updateContainerBackground();
         resizeCanvas();
         updateChartData(state.settings.sides);
-        updateAllSettings(false); // Don't save history on initial load
-        saveStateToHistory(); // Save the very first state
+        updateStatusLabelsUI();
+        updateAllSettings(false); 
+        saveStateToHistory();
     }
 
     // --- パネルビュー管理 ---
@@ -652,7 +677,7 @@ window.onload = () => {
                 const span = el.querySelector('span');
                  if (icon && span) {
                     span.textContent = ` ${translations[lang][key]}`;
-                } else if (!icon) { // Language toggle button has no icon
+                } else {
                     el.textContent = translations[lang][key];
                 }
             }
@@ -667,7 +692,8 @@ window.onload = () => {
         if (!settingsView.classList.contains('hidden')) showPanelView('settings');
         else if (!helpView.classList.contains('hidden')) showPanelView('help');
         else if (!editView.classList.contains('hidden')) showPanelView('edit');
-
+        
+        updateStatusLabelsUI(); // Re-render labels for language change
         updateFullscreenButton();
     }
 
@@ -683,9 +709,12 @@ window.onload = () => {
 
     // --- 設定の更新と保存 ---
     function updateAllSettings(saveHistory = true) {
+        const previousGraphSize = state.settings.graphSize;
+        
         state.settings.graphSize = document.querySelector('input[name="graphSize"]:checked').value;
         state.settings.backgroundColor = getEl('backgroundColor').value;
         state.settings.backgroundColorOpacity = parseInt(getEl('backgroundColorOpacity').value) / 100;
+        const previousSides = state.settings.sides;
         state.settings.sides = parseInt(getEl('sides').value);
         state.settings.maxValue = parseInt(getEl('maxValue').value);
         state.settings.chartLineWidth = parseInt(getEl('chartLineWidth').value);
@@ -694,18 +723,25 @@ window.onload = () => {
         state.settings.gridLineColor = getEl('gridLineColor').value;
         state.settings.fillColor = getEl('fillColor').value;
         state.settings.fillOpacity = parseInt(getEl('fillOpacity').value) / 100;
-        state.settings.labelFontSize = parseInt(getEl('labelFontSize').value);
-        state.settings.labelColor = getEl('labelColor').value;
+        state.settings.showValues = getEl('showValues').checked;
         state.settings.imageClip = getEl('imageClip').value;
         
         updateValueDisplays();
+        updateContainerBackground();
         
-        if (state.chartData.labels.length !== state.settings.sides) {
+        if (state.settings.sides !== previousSides) {
             updateChartData(state.settings.sides);
+            updateStatusLabelsUI();
         }
 
         saveSettings();
-        resizeCanvas();
+        
+        if (state.settings.graphSize !== previousGraphSize) {
+            resizeCanvas();
+        } else {
+            draw();
+        }
+        
         if(saveHistory) saveStateToHistory();
     }
     
@@ -716,15 +752,22 @@ window.onload = () => {
         getEl('chartLineWidth-value').textContent = getEl('chartLineWidth').value;
         getEl('gridLineWidth-value').textContent = getEl('gridLineWidth').value;
         getEl('fillOpacity-value').textContent = getEl('fillOpacity').value;
-        getEl('labelFontSize-value').textContent = getEl('labelFontSize').value;
         getEl('imageScale-value').textContent = getEl('imageScale').value;
         getEl('imageOpacity-value').textContent = getEl('imageOpacity').value;
         getEl('textFontSize-value').textContent = getEl('textFontSize').value;
+        
+        document.querySelectorAll('.label-font-size-value').forEach(el => {
+            const index = el.dataset.index;
+            if(state.chartData.labels[index]) {
+                el.textContent = state.chartData.labels[index].fontSize;
+            }
+        });
     }
 
     function saveSettings() {
         localStorage.setItem('radarChartSettingsUnified', JSON.stringify(state.settings));
         localStorage.setItem('radarChartAccordion', JSON.stringify({
+            status: getEl('status-settings-content').classList.contains('open'),
             field: getEl('field-settings-content').classList.contains('open'),
             chart: getEl('chart-settings-content').classList.contains('open')
         }));
@@ -739,36 +782,27 @@ window.onload = () => {
             state.settings = defaultSettings;
         }
         updateSettingsUI();
-
-        const savedAccordion = localStorage.getItem('radarChartAccordion');
-        if (savedAccordion) {
-            const accordionState = JSON.parse(savedAccordion);
-            if (accordionState.field) toggleAccordion('field-settings-content', true);
-            if (accordionState.chart) toggleAccordion('chart-settings-content', true);
-        } else {
-             toggleAccordion('field-settings-content', true);
-             toggleAccordion('chart-settings-content', true);
-        }
     }
 
     function updateSettingsUI() {
-        // 古い設定（aspectRatio）からの移行
-        if (state.settings.aspectRatio) {
-            state.settings.graphSize = 'large';
-            delete state.settings.aspectRatio;
-        }
         document.querySelector(`input[name="graphSize"][value="${state.settings.graphSize}"]`).checked = true;
         Object.keys(state.settings).forEach(key => {
             const el = getEl(key);
-            if(el && key !== 'graphSize') { // graphSizeは上で処理済み
-                if (key === 'fillOpacity' || key === 'backgroundColorOpacity') {
+            if(el) {
+                if (el.type === 'checkbox') {
+                    el.checked = state.settings[key];
+                } else if (key === 'fillOpacity' || key === 'backgroundColorOpacity') {
                     el.value = state.settings[key] * 100;
-                } else {
+                } else if (key !== 'graphSize') { 
                     el.value = state.settings[key];
                 }
             }
         });
         updateValueDisplays();
+    }
+    
+    function updateContainerBackground() {
+        canvasContainer.style.backgroundColor = hexToRgba(state.settings.backgroundColor, state.settings.backgroundColorOpacity);
     }
 
     // --- チャートデータの更新 ---
@@ -778,7 +812,7 @@ window.onload = () => {
 
         if (newSides > currentLength) {
             for (let i = currentLength; i < newSides; i++) {
-                state.chartData.labels.push(defaultLabels[i % defaultLabels.length]);
+                state.chartData.labels.push(getDefaultLabel(defaultLabels[i % defaultLabels.length]));
                 state.chartData.values.push(1);
             }
         } else if (newSides < currentLength) {
@@ -787,8 +821,9 @@ window.onload = () => {
         }
     }
     
-    function drawOnContext(targetCtx, width, height, geometry, options = {}) {
-        drawBackground(targetCtx, width, height, options);
+    function drawOnContext(targetCtx, width, height, geometry) {
+        // Clear canvas before drawing chart content
+        targetCtx.clearRect(0, 0, width, height);
 
         const { cx, cy, r, textCenterX, textCenterY, maxTextWidth } = geometry;
 
@@ -809,7 +844,7 @@ window.onload = () => {
         const width = canvas.width;
         const height = canvas.height;
         const geometry = calculateGeometry(width, height);
-        chartGeometry = geometry; // Update global geometry for interaction handlers
+        chartGeometry = geometry;
         drawOnContext(ctx, width, height, geometry);
     }
 
@@ -966,12 +1001,13 @@ window.onload = () => {
     }
 
     function drawLabels(targetCtx, cx, cy, r) {
-        targetCtx.fillStyle = state.settings.labelColor;
         targetCtx.textAlign = 'center';
         targetCtx.textBaseline = 'middle';
         
         const labelRadius = r * 1.15;
         for (let i = 0; i < state.settings.sides; i++) {
+            targetCtx.save();
+
             const label = state.chartData.labels[i];
             const value = state.chartData.values[i];
             const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
@@ -980,14 +1016,32 @@ window.onload = () => {
             let y = cy + labelRadius * Math.sin(angle);
 
             if (i === 0) { // Top label
-                y -= state.settings.labelFontSize * 0.5;
+                y -= label.fontSize * 0.5;
             }
 
-            targetCtx.font = `${state.settings.labelFontSize}px sans-serif`;
-            targetCtx.fillText(label, x, y);
+            const fontStyle = label.isItalic ? 'italic' : 'normal';
+            const fontWeight = label.isBold ? 'bold' : 'normal';
+            targetCtx.font = `${fontStyle} ${fontWeight} ${label.fontSize}px sans-serif`;
             
-            targetCtx.font = `${state.settings.labelFontSize * 0.8}px sans-serif`;
-            targetCtx.fillText(`(${value})`, x, y + state.settings.labelFontSize * 1.1);
+            targetCtx.fillStyle = label.color;
+
+            if (label.hasShadow) {
+                targetCtx.shadowColor = 'rgba(0,0,0,0.5)';
+                targetCtx.shadowBlur = 3;
+                targetCtx.shadowOffsetX = 1;
+                targetCtx.shadowOffsetY = 1;
+            }
+            
+            targetCtx.fillText(label.text, x, y);
+            
+            targetCtx.shadowColor = 'transparent';
+
+            if (state.settings.showValues) {
+                targetCtx.font = `${label.fontSize * 0.8}px sans-serif`;
+                targetCtx.fillText(`(${value})`, x, y + label.fontSize * 1.1);
+            }
+
+            targetCtx.restore();
         }
     }
 
@@ -1028,7 +1082,7 @@ window.onload = () => {
             button.addEventListener('click', () => {
                 const contentId = button.getAttribute('data-accordion-toggle');
                 toggleAccordion(contentId);
-                saveSettings(); // Save accordion state
+                saveSettings();
             });
         });
 
@@ -1051,7 +1105,7 @@ window.onload = () => {
             });
         });
         
-        const allChangeInputs = document.querySelectorAll('#settings-view input[type="color"], #settings-view input[type="radio"], #edit-view select, #edit-view input[type="color"], #edit-view input[type="checkbox"], #edit-view textarea');
+        const allChangeInputs = document.querySelectorAll('#settings-view input[type="color"], #settings-view input[type="radio"], #settings-view input[type="checkbox"], #edit-view select, #edit-view input[type="color"], #edit-view input[type="checkbox"], #edit-view textarea');
         allChangeInputs.forEach(input => {
             const eventType = (input.type === 'checkbox' || input.type === 'radio' || input.tagName === 'SELECT') ? 'change' : 'input';
             input.addEventListener(eventType, () => {
@@ -1074,7 +1128,7 @@ window.onload = () => {
         getEl('reset-field-settings-btn').addEventListener('click', () => {
             showConfirmDialog(t('confirmReset'), () => {
                 const defaults = getDefaultSettings();
-                const fieldKeys = ['graphSize', 'backgroundColor', 'backgroundColorOpacity', 'sides', 'maxValue', 'gridLineWidth', 'gridLineColor', 'labelFontSize', 'labelColor'];
+                const fieldKeys = ['graphSize', 'backgroundColor', 'backgroundColorOpacity', 'maxValue', 'gridLineWidth', 'gridLineColor'];
                 fieldKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
                 updateAllSettings();
@@ -1083,7 +1137,7 @@ window.onload = () => {
         getEl('reset-chart-settings-btn').addEventListener('click', () => {
              showConfirmDialog(t('confirmReset'), () => {
                 const defaults = getDefaultSettings();
-                const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity'];
+                const chartKeys = ['chartLineWidth', 'chartLineColor', 'fillColor', 'fillOpacity', 'showValues'];
                 chartKeys.forEach(key => state.settings[key] = defaults[key]);
                 updateSettingsUI();
                 updateAllSettings();
@@ -1237,47 +1291,78 @@ window.onload = () => {
     function handleDoubleClick(e) {
         const pos = getMousePos(e);
         const { cx, cy, r } = chartGeometry;
-        for (let i = 0; i < state.settings.sides; i++) {
-            const angle = (i / state.settings.sides) * 2 * Math.PI - Math.PI / 2;
-            const labelRadius = r * 1.15;
-            const labelX = cx + labelRadius * Math.cos(angle);
-            const labelY = cy + labelRadius * Math.sin(angle);
-            ctx.font = `${state.settings.labelFontSize}px sans-serif`;
-            const textMetrics = ctx.measureText(state.chartData.labels[i]);
-            const textWidth = textMetrics.width;
-            const textHeight = state.settings.labelFontSize;
-            if (pos.x > labelX - textWidth / 2 && pos.x < labelX + textWidth / 2 && pos.y > labelY - textHeight / 2 && pos.y < labelY + textHeight / 2) {
-                createLabelInput(i, labelX, labelY);
-                return;
-            }
-        }
         const distance = Math.sqrt(Math.pow(pos.x - cx, 2) + Math.pow(pos.y - cy, 2));
         if (distance < r) { showPanelView('edit'); }
     }
     
-    function createLabelInput(index, x, y) {
-        if(state.editingLabel !== -1) return;
-        state.editingLabel = index;
-        const originalValue = state.chartData.labels[index];
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = originalValue;
-        input.className = 'label-input w-24 text-center border border-indigo-500 rounded-md';
-        input.style.left = `${x}px`;
-        input.style.top = `${y}px`;
-        input.style.fontSize = `${state.settings.labelFontSize}px`;
-        input.addEventListener('blur', () => {
-            const newValue = input.value.trim();
-            state.chartData.labels[index] = newValue === '' ? originalValue : newValue;
-            canvasContainer.removeChild(input);
-            state.editingLabel = -1;
-            draw();
-            saveStateToHistory();
+    // --- ステータス項目UI制御 ---
+    function updateStatusLabelsUI() {
+        const container = getEl('status-labels-container');
+        container.innerHTML = ''; // Clear existing controls
+
+        state.chartData.labels.forEach((label, index) => {
+            const controlIdPrefix = `label-${index}`;
+            const controlHTML = `
+                <div class="p-3 border border-gray-200 rounded-md space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <label for="${controlIdPrefix}-text" class="text-sm font-medium text-gray-700 whitespace-nowrap">${t('labelLabelText')} ${index + 1}:</label>
+                        <input type="text" id="${controlIdPrefix}-text" data-index="${index}" value="${label.text}" class="w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label for="${controlIdPrefix}-fontSize" class="block text-sm font-medium text-gray-700">
+                                <span data-lang="labelLabelFontSize">${t('labelLabelFontSize')}</span>: 
+                                <span class="label-font-size-value" data-index="${index}">${label.fontSize}</span>px
+                            </label>
+                            <input type="range" id="${controlIdPrefix}-fontSize" data-index="${index}" min="1" max="60" value="${label.fontSize}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                        </div>
+                        <div>
+                            <label for="${controlIdPrefix}-color" class="block text-sm font-medium text-gray-700 sr-only">${t('textColor')}</label>
+                            <input type="color" id="${controlIdPrefix}-color" data-index="${index}" value="${label.color}" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-around text-sm">
+                        <label class="checkbox-label"><input type="checkbox" id="${controlIdPrefix}-bold" data-index="${index}" ${label.isBold ? 'checked' : ''} class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-1" data-lang="textFontBold">${t('textFontBold')}</span></label>
+                        <label class="checkbox-label"><input type="checkbox" id="${controlIdPrefix}-italic" data-index="${index}" ${label.isItalic ? 'checked' : ''} class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-1" data-lang="textFontItalic">${t('textFontItalic')}</span></label>
+                        <label class="checkbox-label"><input type="checkbox" id="${controlIdPrefix}-shadow" data-index="${index}" ${label.hasShadow ? 'checked' : ''} class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-1" data-lang="textHasShadow">${t('textHasShadow')}</span></label>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', controlHTML);
         });
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { input.blur(); } });
-        canvasContainer.appendChild(input);
-        input.focus();
-        input.select();
+
+        // Add event listeners to the new controls
+        container.querySelectorAll('input').forEach(input => {
+            const index = parseInt(input.dataset.index, 10);
+            if (input.type === 'text') {
+                input.addEventListener('input', (e) => {
+                    state.chartData.labels[index].text = e.target.value;
+                    draw();
+                });
+                input.addEventListener('change', () => saveStateToHistory());
+            } else if (input.type === 'range') {
+                input.addEventListener('input', (e) => {
+                    state.chartData.labels[index].fontSize = parseInt(e.target.value, 10);
+                    updateValueDisplays();
+                    draw();
+                });
+                input.addEventListener('change', () => saveStateToHistory());
+            } else if (input.type === 'checkbox') {
+                input.addEventListener('change', (e) => {
+                    if (e.target.id.endsWith('-bold')) state.chartData.labels[index].isBold = e.target.checked;
+                    if (e.target.id.endsWith('-italic')) state.chartData.labels[index].isItalic = e.target.checked;
+                    if (e.target.id.endsWith('-shadow')) state.chartData.labels[index].hasShadow = e.target.checked;
+                    draw();
+                    saveStateToHistory();
+                });
+            } else if (input.type === 'color') {
+                 input.addEventListener('input', (e) => {
+                    state.chartData.labels[index].color = e.target.value;
+                    draw();
+                });
+                input.addEventListener('change', () => saveStateToHistory());
+            }
+        });
     }
 
     // --- 編集ビュー制御 ---
@@ -1318,7 +1403,7 @@ window.onload = () => {
         state.image.offsetX = parseInt(getEl('imageOffsetX').value);
         state.image.offsetY = parseInt(getEl('imageOffsetY').value);
         state.image.scale = parseInt(getEl('imageScale').value) / 100;
-        state.settings.imageClip = getEl('imageClip').value; // Also update this from here
+        state.settings.imageClip = getEl('imageClip').value;
         updateValueDisplays();
         draw();
         if(saveHistory) saveStateToHistory();
@@ -1459,7 +1544,7 @@ window.onload = () => {
 
     function saveChartData(fileName) {
         const dataToSave = {
-            version: '5.3',
+            version: '5.6',
             settings: state.settings, chartData: state.chartData,
             image: { dataUrl: state.image.element ? state.image.element.src : null, name: state.image.name, opacity: state.image.opacity, offsetX: state.image.offsetX, offsetY: state.image.offsetY, scale: state.image.scale },
             text: state.text, editMode: state.editMode,
@@ -1481,7 +1566,6 @@ window.onload = () => {
         reader.onload = (event) => {
             try {
                 const loadedData = JSON.parse(event.target.result);
-                // 検証関数を呼び出す
                 validateAndApplyLoadedData(loadedData);
             } catch (error) {
                 console.error("File loading failed:", error);
@@ -1493,13 +1577,7 @@ window.onload = () => {
     }
 
     function validateAndApplyLoadedData(data) {
-        // 1. バージョンチェック (将来の拡張用)
-        if (data.version !== '5.3') {
-            console.warn(`Mismatched version. Expected '5.3', got '${data.version}'.`);
-        }
-
-        // 2. データの存在と型を検証し、安全に適用する
-        isApplyingState = true; // 履歴保存を一時的に無効化
+        isApplyingState = true;
 
         const defaultSettings = getDefaultSettings();
         const defaultText = getDefaultTextSettings();
@@ -1507,7 +1585,6 @@ window.onload = () => {
         // Settings
         if (data.settings && typeof data.settings === 'object') {
             state.settings = { ...defaultSettings, ...data.settings };
-            // 数値の範囲チェック（例）
             state.settings.sides = Math.max(4, Math.min(7, parseInt(state.settings.sides, 10) || 5));
             state.settings.maxValue = Math.max(4, Math.min(10, parseInt(state.settings.maxValue, 10) || 5));
         } else {
@@ -1516,9 +1593,12 @@ window.onload = () => {
 
         // ChartData
         if (data.chartData && typeof data.chartData === 'object' && Array.isArray(data.chartData.labels) && Array.isArray(data.chartData.values)) {
+            if (data.chartData.labels.every(l => typeof l === 'string')) {
+                 data.chartData.labels = data.chartData.labels.map(text => getDefaultLabel(text));
+            }
+            data.chartData.labels = data.chartData.labels.map(l => ({ ...getDefaultLabel(), ...l }));
             state.chartData = data.chartData;
         } else {
-            // デフォルト値にリセット
             state.chartData = { labels: [], values: [] };
             updateChartData(state.settings.sides); 
         }
@@ -1529,39 +1609,38 @@ window.onload = () => {
         } else {
             state.text = defaultText;
         }
-
-        // EditMode
         state.editMode = (data.editMode === 'text' || data.editMode === 'image') ? data.editMode : 'image';
+        state.image = { element: null, name: '', opacity: 1.0, offsetX: 0, offsetY: 0, scale: 1.0 }; 
 
-        // 3. 画像データの検証と読み込み
-        state.image = { element: null, name: '', opacity: 1.0, offsetX: 0, offsetY: 0, scale: 1.0 }; // いったんリセット
-        if (data.image && typeof data.image === 'object' && data.image.dataUrl) {
-            // ★重要: data:image/ で始まるData URLのみを許可する
-            if (String(data.image.dataUrl).startsWith('data:image/')) {
-                const img = new Image();
-                img.onload = () => {
-                    state.image = { ...state.image, ...data.image, element: img, scale: data.image.scale || 1.0 };
-                    draw();
-                    saveStateToHistory(); // 最終的な状態を履歴に保存
-                };
-                img.src = data.image.dataUrl;
-            } else {
-                console.warn("Skipping image load: dataUrl is not a valid Data URL.");
+        const applyUIUpdates = () => {
+            updateLanguage();
+            updateSettingsUI();
+            updateContainerBackground();
+            updateEditViewUI();
+            updateStatusLabelsUI();
+            resizeCanvas();
+            isApplyingState = false;
+        };
+
+        if (data.image && typeof data.image === 'object' && data.image.dataUrl && String(data.image.dataUrl).startsWith('data:image/')) {
+            const img = new Image();
+            img.onload = () => {
+                state.image = { ...state.image, ...data.image, element: img, scale: data.image.scale || 1.0 };
+                applyUIUpdates();
+                draw();
+                saveStateToHistory();
+            };
+            img.onerror = () => {
+                applyUIUpdates();
                 draw();
                 saveStateToHistory();
             }
+            img.src = data.image.dataUrl;
         } else {
+            applyUIUpdates();
             draw();
             saveStateToHistory();
         }
-        
-        // 4. UIを更新
-        updateLanguage();
-        updateSettingsUI();
-        updateEditViewUI();
-        resizeCanvas();
-
-        isApplyingState = false; // 履歴保存を再度有効化
     }
 
     function exportImage() {
@@ -1572,20 +1651,16 @@ window.onload = () => {
         const size = parseInt(getEl('exportSize').value);
         
         const tempCanvas = document.createElement('canvas');
-        
-        // 常に正方形で出力
         tempCanvas.width = size;
         tempCanvas.height = size;
         
         const tempCtx = tempCanvas.getContext('2d');
         const geometry = calculateGeometry(tempCanvas.width, tempCanvas.height);
         
-        const exportOptions = {
+        drawBackground(tempCtx, tempCanvas.width, tempCanvas.height, {
             forceOpaqueBackground: format === 'jpeg'
-        };
-
-        // Draw everything on the temporary canvas, including the background
-        drawOnContext(tempCtx, tempCanvas.width, tempCanvas.height, geometry, exportOptions);
+        });
+        drawOnContext(tempCtx, tempCanvas.width, tempCanvas.height, geometry);
 
         const imageType = `image/${format}`;
         const dataUrl = tempCanvas.toDataURL(imageType, format === 'jpeg' ? 0.9 : 1.0);
@@ -1606,7 +1681,6 @@ window.onload = () => {
     }
 
     function sanitizeFileName(fileName) {
-        // ファイル名として使えない文字をハイフンに置き換える
         return fileName.replace(/[\/\\?%*:|"<>]/g, '-');
     }
 
@@ -1617,7 +1691,7 @@ window.onload = () => {
         history = history.slice(0, historyIndex + 1);
         
         const newState = JSON.parse(JSON.stringify(state, (key, value) => {
-            if (key === 'element') return null; // Don't stringify the image element
+            if (key === 'element') return null;
             return value;
         }));
         if(state.image.element) {
@@ -1650,7 +1724,9 @@ window.onload = () => {
         }
 
         updateSettingsUI();
+        updateContainerBackground();
         updateEditViewUI();
+        updateStatusLabelsUI();
         resizeCanvas();
         
         isApplyingState = false;
@@ -1683,7 +1759,6 @@ window.onload = () => {
         }
     }
 
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     function updateFullscreenButton() {
         const btn = getEl('fullscreen-btn');
         if(!btn) return;
@@ -1698,7 +1773,6 @@ window.onload = () => {
             btn.title = t('fullscreenEnter');
         }
     }
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
 
     init();
 };
